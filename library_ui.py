@@ -66,7 +66,7 @@ def setup():
         quit_button.grid(row=4, column =0,padx=5,pady=5)
 
     global root; root = tk.Tk()
-    root.title("Welcome to the Pitts Family Library!")
+    root.title("This is the changed version of Alexandria, on the Testing Branch")
     global master; master = tk.Frame(root, bg="LightGoldenrod2")
     master.grid()
 
