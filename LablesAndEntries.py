@@ -2,7 +2,7 @@ import Tkinter as tk
 
 def BasicBuild(master, lables, locations, BackgroundColor = "white", EntWidth = 16):
     entries = []
-    master.title("Title updated on labtop")
+    master.title("Title updated on laptop")
 
     for i in range(len(lables)):
         col = 2*locations[i][1]
