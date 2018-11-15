@@ -1,5 +1,7 @@
 import Tkinter as tk
 
+#code is unchanged, but now there are some comments!
+
 def BasicBuild(master, lables, locations, BackgroundColor = "white", EntWidth = 16):
     entries = []
     master.title("Title updated on laptop")
