@@ -21,7 +21,9 @@ def close_connection(db):
     db.close()
 
 def GetAuthorsFromISBN(isbn):
-    # A function that takes in a
+    # A function that takes in an ISBN number, and returns a list of tuples,
+    # each of which holds the first and last name of an author associated with
+    # that ISBN
 
     db, c = create_connection()
 
@@ -39,10 +41,11 @@ def GetAuthorsFromISBN(isbn):
     elif len(AuthorIDList) == 1:
         getNames = "SELECT Author_First, Author_Last from Authors WHERE Author_ID = %d" % AuthorIDList[0]
     else:
-        print("Tr)
+        msg = "Failed to access authors with ISBN %d" % isbn
+        print(msg)
+        return
     c.execute(getNames)
     AuthorNames = list(c.fetchall())
-
     close_connection(db)
     return AuthorNames
 
@@ -283,5 +286,5 @@ def main():
     root.mainloop()
 
 if __name__ == '__main__':
-    print(GetAuthorsFromISBN(978159327569))
+    print(GetAuthorsFromISBN(9781481451949))
     main()
