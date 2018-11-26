@@ -4,7 +4,7 @@ import Tkinter as tk
 
 def LEBuild(master, labels, locations, BackgroundColor = "white", EntWidth = 16):
     entries = []
-    master.title("Title updated on laptop")
+#    master.title("Title updated on laptop")
 
     for i in range(len(labels)):
         col = 2*locations[i][1]
@@ -15,7 +15,7 @@ def LEBuild(master, labels, locations, BackgroundColor = "white", EntWidth = 16)
         entries[i].grid(row=locations[i][0],column=col,padx=5,pady=5)
 
 
-    return master, entries
+    return entries
 
 def LabelBuild(master, labels, locations, BackgroundColor = "white"):
 
