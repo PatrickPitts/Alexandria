@@ -4,7 +4,7 @@ def create_connection(database):
     conn = sq.connect(database)
     return conn
 
-db = "PittsFamilyLibrary.db"
+db = "Alexandria.db"
 y = create_connection(db)
 cur = y.cursor()
 

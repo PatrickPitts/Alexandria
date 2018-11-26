@@ -92,12 +92,15 @@ def purge(conn):
         cur.execute(drop)
 
 def main():
-    db = "PittsFamilyLibrary.db"
+    db = "Alexandria.db"
     x = create_connection(db)
+    print("Deleting Current file Alexandria.db")
     purge(x)
+    print("Creating new file Alexandria.db")
     insert_table(x)
     insert_data(x)
     x.close()
+    print("File creation complete")
 
 
 if __name__ == "__main__":

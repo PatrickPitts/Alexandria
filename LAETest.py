@@ -6,7 +6,7 @@ root = tk.Tk()
 lables = ["1", "2", "3"]
 loc = [(1,1),(1,2),(2,1)]
 
-mainframe, entries = lae.BasicBuild(root,lables,loc)
+mainframe, entries = lae.LEBuild(root,lables,loc)
 
 
 

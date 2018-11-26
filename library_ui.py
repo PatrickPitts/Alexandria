@@ -3,19 +3,48 @@ import sqlite3 as sq
 import datetime
 from pollDb import *
 
-master_headers = ["ISBN","Title","Subtitle","Author, Last","Author, First",
-"2nd Author, Last", "2nd Author, First","3rd Author, Last","3rd Author, First",
-"4th Author, Last","4th Author, First", "5th Author, Last", "5th Author, First",
-"Publication Date", "Genre", "Subgenre", "Series", "Edition", "Position in Series",
-"Format", "Publisher", "Owner"]
 
 def create_connection():
-    db = sq.connect("PittsFamilyLibrary.db")
+    # A function that generates a connection to the Alexandria.db database,
+    # which stores the book data for the library. Returns a connection object to the
+    # database itself, which is required to shut down the connection later, and
+    # a cursor object which is required to interact with the database.
+
+    db = sq.connect("Alexandria.db")
     return db, db.cursor()
 
 def close_connection(db):
+    # A function that takes a connection object, commits any changes to the
+    # connected database, then closes the connection.
+
     db.commit()
     db.close()
+
+def GetAuthorsFromISBN(isbn):
+    # A function that takes in a
+
+    db, c = create_connection()
+
+    getID = "SELECT Author_ID from BookToAuthors WHERE ISBN = %d" % isbn
+    c.execute(getID)
+    AuthorIDsAsTuples = c.fetchall()
+
+    AuthorIDList = []
+    for tup in AuthorIDsAsTuples:
+        AuthorIDList.append(tup[0])
+
+    if len(AuthorIDList) > 1:
+        AuthorIDTuple = tuple(AuthorIDList)
+        getNames = "SELECT Author_First, Author_Last from Authors WHERE Author_ID IN %s" % str(AuthorIDTuple)
+    elif len(AuthorIDList) == 1:
+        getNames = "SELECT Author_First, Author_Last from Authors WHERE Author_ID = %d" % AuthorIDList[0]
+    else:
+        print("Tr)
+    c.execute(getNames)
+    AuthorNames = list(c.fetchall())
+
+    close_connection(db)
+    return AuthorNames
 
 def getBasicData():
 
@@ -31,19 +60,13 @@ def getBasicData():
 
     authorsData =[]
     for i in range(len(booksData)):
-        getAllAuthors = '''SELECT Author_Last, Author_First FROM authors WHERE
-            ISBN = %d''' % (booksData[i][0])
-        c.execute(getAllAuthors)
-        authors = list(c.fetchall()[0])
-
-        booksData[i] = booksData[i][:2] + authors + booksData[i][2:]
+        HeadlineAuthor = GetAuthorsFromISBN(booksData[i][0])[0]
+        booksData[i] = booksData[i][:2]  +list(HeadlineAuthor) + booksData[i][2:]
+        print(HeadlineAuthor[0])
 
     close_connection(db)
 
     return booksData
-
-def getAllData():
-    pass
 
 def setup():
 
@@ -66,7 +89,7 @@ def setup():
         quit_button.grid(row=4, column =0,padx=5,pady=5)
 
     global root; root = tk.Tk()
-    root.title("This is the changed version of Alexandria, on the Testing Branch")
+    root.title("Alexandria")
     global master; master = tk.Frame(root, bg="LightGoldenrod2")
     master.grid()
 
@@ -110,7 +133,7 @@ def build_add_pane():
 
     # A method that takes the add_fields Entries, gets the text from them,
     # and inputs them into a String that represents an SQL command that will
-    # input that data into PittsFamilyLibrary.db database, books table
+    # input that data into Alexandria.db database, books table
     def insert_book_data():
 
         def check_null(text):
@@ -256,7 +279,9 @@ def build_search_pane():
 def main():
 
     setup()
+
     root.mainloop()
 
 if __name__ == '__main__':
+    print(GetAuthorsFromISBN(978159327569))
     main()
