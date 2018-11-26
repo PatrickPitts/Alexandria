@@ -22,7 +22,8 @@ def insert_table(conn):
     sql2 = ''' CREATE TABLE Authors(
     Author_ID integer PRIMARY KEY,
     Author_Last text,
-    Author_First text)'''
+    Author_First text,
+    Author_Middle text)'''
 
     sql3 = ''' CREATE TABLE BookToAuthors(
     ISBN integer,
@@ -55,8 +56,8 @@ def insert_data(conn):
     aut1 = '''INSERT INTO authors(Author_ID, Author_First, Author_Last)
         VALUES (1,"Mishell","Baker")'''
 
-    aut2 = '''INSERT INTO authors(Author_ID, Author_First, Author_Last)
-        VALUES (2,"Sarah J.","Maas")'''
+    aut2 = '''INSERT INTO authors(Author_ID, Author_First, Author_Middle, Author_Last)
+        VALUES (2,"Sarah", "J.","Maas")'''
 
     aut3 = '''INSERT INTO authors(Author_ID, Author_First, Author_Last)
         VALUES (3,"Brian","Ward")'''

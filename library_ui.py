@@ -106,8 +106,8 @@ def Setup():
 
     global root; root = tk.Tk()
     root.title("Alexandria")
-    # global master; master = tk.Frame(root, bg = "LightGoldenrod2")
-    # master.grid()
+    root.geometry("+0+0")
+
     BuildMainMenu()
     root.mainloop()
 
@@ -153,67 +153,57 @@ def BuildAddPane():
     # A method that takes the add_fields Entries, gets the text from them,
     # and inputs them into a String that represents an SQL command that will
     # input that data into Alexandria.db database, books table
-    def insert_book_data():
-        print("Inserting but not really!")
-        # def check_null(text):
-        #     if not text:
-        #         return "NULL"
-        #     return text
-        #
-        # def minAuthorsFill(arr):
-        #     flag = True
-        #     for word in arr:
-        #         if word is not 'NULL':
-        #             flag = False
-        #     if flag:
-        #         arr[1] = 'Anonymous'
-        #     return arr
-        #
-        #
-        # db, c = create_connection()
-        #
-        # booksData = []
-        # authorsData = []
-        # for entry in bookFields:
-        #     booksData.append(check_null(entry.get()))
-        # for entry in authFields:
-        #     authorsData.append(check_null(entry.get()))
-        # authorsData = minAuthorsFill(authorsData)
-        #
-        # authorsData.append(booksData[2])#booksData[2] is the ISBN number
-        #
-        # sql1 = '''INSERT INTO books (Title, Subtitle, ISBN,
-        # Series, Position_in_Series, Genre, Subgenre, Publication_Date, Publisher,
-        # Format, Owner) VALUES '''
-        # sql1 += "("
-        # for thing in booksData:
-        #     sql1 += "'" + thing + "', "
-        #
-        # sql1 = sql1[:-2] + ")"
-        #
-        # for i in range(len(authorsData)/2):
-        #     if authorsData[i] is not "NULL" or authorsData[i+5] is not "NULL":
-        #         sql2 = '''INSERT INTO authors(Author_First, Author_Last, ISBN) Values''' + "("
-        #         sql2 += "'" + authorsData[i] + "', '" + authorsData[i+5] + "'," + authorsData[-1] + ")"
-        #         c.execute(sql2)
-        #
-        #
-        # c.execute(sql1)
-        # close_connection(db)
-        # BuildResultsPane()
+    def SanitationChecks(db, cur):
+        ErrorText.config(text = "")
+        title = BookFields[0].get()
+        isbn = BookFields[2].get()
+        if not isbn or len(title) == 0:
+            ErrorText.config(text = "You need at least a title and ISBN to add a book")
+            return False
+
+        cmd = "SELECT Title FROM Books WHERE ISBN = %d" % int(isbn)
+        cur.execute(cmd)
+        if cur.fetchall():
+            ErrorText.config(text = "Cannot add repeat ISBN Numbers.")
+            return False
+
+        return True
+
+    def InsertBookData():
+
+        db, cur = create_connection()
+
+        flag = SanitationChecks(db, cur)
+        if flag:
+            print("Passed Sanitation Checks, Inserting (Not)")
+
+            first = AuthorFields[0].get()
+            middle = AuthorFields[1].get()
+            last = AuthorFields[2].get()
+            cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r OR "None" AND
+                    Author_Middle IS %r OR "None" AND
+                    Author_Last IS %r OR "None"''' %(first, middle, last)
+            print(cmd)
+            cur.execute(cmd)
+            print(cur.fetchall())
+
+
+        else:
+            print("Problems with data, double check data")
+
     CleanupRoot()
 
     global NumAuthors; NumAuthors = 1
     global AuthorFields; AuthorFields = []
+    global BookFields
+    global ErrorText
+
     def MoreAuthors():
         global NumAuthors; global AuthorFields
-        AuthLabels = ["Author, First: ", "Author, Last: "]
-        AuthLocations = [(NumAuthors, 1), (NumAuthors, 2)]
+        AuthLabels = ["Author, First: ","Middle: ", "Last: "]
+        AuthLocations = [(NumAuthors+1, 1), (NumAuthors+1, 2), (NumAuthors+1,3)]
         AuthorFields += LAE.LEBuild(AuthorFrame, AuthLabels, AuthLocations, BackgroundColor = "thistle")
         NumAuthors += 1
-
-
-
 
     master = tk.Frame(root, bg = "LightGoldenrod2")
     master.grid()
@@ -224,91 +214,53 @@ def BuildAddPane():
     DataFrame = tk.Frame(master, bg = "LightGoldenrod2")
     DataFrame.grid(row = 0, column = 1)
 
-    AuthorFrame = tk.Frame(master, bg = "LightGoldenrod2")
-    AuthorFrame.grid(row = 0, column = 2)
+    RightFrame = tk.Frame(master, bg = "LightGoldenrod2")
+    RightFrame.grid(row = 0, column = 2)
 
-    AuthorButtonFrame = tk.Frame(master, bg = "LightGoldenrod2")
-    AuthorButtonFrame.grid(row = 0, column = 3)
+    AuthorFrame = tk.Frame(RightFrame, bg = "LightGoldenrod2")
+    AuthorFrame.grid(row = 1, column = 0)
+
+    AuthorButtonFrame = tk.Frame(RightFrame, bg = "LightGoldenrod2")
+    AuthorButtonFrame.grid(row = 0, column = 0)
 
     BackButtton = tk.Button(ButtonFrame, text = "Back", command = BuildMainMenu)
     BackButtton.grid(row = 1, column = 0)
 
-    InsertButton = tk.Button(ButtonFrame, text = "Add Book!", padx = 10, pady = 10, command = insert_book_data)
+    InsertButton = tk.Button(ButtonFrame, text = "Add Book!", padx = 10, pady = 10, command = InsertBookData)
     InsertButton.grid(row = 2, column = 0, pady = 20)
 
     MoreAuthorsButton = tk.Button(AuthorButtonFrame, text = "Another Author", command = MoreAuthors,
             padx = 10, pady = 10)
-    MoreAuthorsButton.grid(padx = 5, pady = 5)
+    MoreAuthorsButton.grid(row = 0, column = 1)
 
-
-
-
-    # List that will store the Entry widgets for future reference
-
-
-
-    #(row, column, Text Field)
-    #Stores the geometry and text information for the labels in the "Add A Book" pane
     x = tk.Label(ButtonFrame, text = "ADD A BOOK TO THE LIBRARY", bg = "LightBlue")
     x.grid(row = 0, column = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
 
     BookLabelTexts = ["Title: ", "Subtitle: ", "ISBN: ", "Series: ","Series #: ",
             "Genre: ","Subgenre: ", "Publication Year: ", "Publisher: "]
-    BookLabelLocations = [(1,1),(1,2),(1,3),(2,1),(2,2),(3,1),(3,2),(4,1),(4,2),(4,3)]
+    BookLabelLocations = [(1,1),(1,2),(1,3),(3,1),(3,2),(5,1),(5,2),(7,1),(7,2),(7,3)]
 
     BookFields = LAE.LEBuild(DataFrame, BookLabelTexts, BookLabelLocations, BackgroundColor = "thistle")
     x = tk.Label(DataFrame, text = "Format: ", bg = "thistle")
-    x.grid(row = 4, column = 5)
+    x.grid(row = 7, column = 5)
 
     FormatOption = tk.StringVar(DataFrame); FormatOption.set("Mass Market PB")
     t = tk.OptionMenu(DataFrame, FormatOption, "Mass Market PB", "Trade PB","Hard Back")
-    t.grid(row = 4, column = 6)
+    t.grid(row = 7, column = 6)
     BookFields.append(FormatOption)
 
     x = tk.Label(DataFrame, text = "Owner: ", bg = "thistle")
-    x.grid(row = 5, column = 1)
+    x.grid(row = 9, column = 1)
 
     OwnerOption = tk.StringVar(DataFrame); OwnerOption.set("Patrick & Shelby")
     t = tk.OptionMenu(DataFrame, OwnerOption, "Patrick & Shelby","John & Kathy")
-    t.grid(row = 5, column = 2)
+    t.grid(row = 9, column = 2)
     BookFields.append(OwnerOption)
 
-    MoreAuthors()
+    ErrorText = tk.Label(DataFrame, text = "", bg = "LightGoldenrod2", fg = "red", font = "bold")
+    ErrorText.grid(row = 10, column = 1, columnspan = 5)
 
-    # label_data = [(1,0,"Title: "),(1,2,"Subtitle: "),(1,4,"ISBN: "),
-    #     (2,0,"Author, First: "),(2,2,"Author, First: "),(2,4,"Author, First: "),
-    #     (2,6,"Author, First: "),(2,8,"Author, First: "),(3,0,"Author, Last: "),
-    #     (3,2,"Author, Last: "),(3,4,"Author, Last: "),(3,6,"Author, Last: "),
-    #     (3,8,"Author, Last: "),(4,0,"Series: "),(4,2,"Series # : "),(5,0,"Genre: "),
-    #     (5,2,"Subgenre: "),(6,0,"Publication Year: "),(6,2,"Publisher: "),(6,4,"Format: "),
-    #     (7,0,"Owner: ")]
-    #
-    # #(row, column, Entry width)
-    # #Stores geometry and width infromation for the Entries in the "Add A Book" pane
-    # booksEntryData = [(1,1,32),(1,3,32),(1,5,13),(4,1,16),(4,3,16),
-    # #     (5,1,16),(5,3,16),(6,1,12),(6,3,16),(6,5,16),(7,1,6)]
-    #
-    # authorEntryData = [(2,1,16),(2,3,16),(2,5,16),(2,7,16),(2,9,16),(3,1,16),(3,3,16),(3,5,16),(3,7,16),(3,9,16)]
-    #
-    # # Loops that takes the the entry_data and label_data and builds the data pane
-    # for i in range(len(booksEntryData)-2):
-    #     t = tk.Entry(data_frame, width = booksEntryData[i][2])
-    #     t.grid(row = booksEntryData[i][0], column = booksEntryData[i][1])
-    #     bookFields.append(t)
-    #
-    #
-    #
-    # for i in range(len(authorEntryData)):
-    #     t = tk.Entry(DataFrame, width = authorEntryData[i][2])
-    #     t.grid(row = authorEntryData[i][0], column = authorEntryData[i][1])
-    #     authFields.append(t)
-    #
-    # for i in range(len(label_data)):
-    #     x = tk.Label(DataFrame, text = label_data[i][2], bg = "LawnGreen")
-    #     x.grid(row = label_data[i][0], column= label_data[i][1], padx = 10, pady = 10)
-    #
-    # b = tk.Button(data_frame,text = "Submit", command = insert_book_data)
-    # b.grid(row = 8, column = 0)
+    MoreAuthors()
 
 def BuildSearchPane():
     for widget in data_frame.winfo_children():
