@@ -20,4 +20,5 @@ def LEBuild(master, labels, locations, BackgroundColor = "white", EntWidth = 16)
 def LabelBuild(master, labels, locations, BackgroundColor = "white"):
 
     for i in range(len(labels)):
-        x = tk.Label()
+        x = tk.Label(master, text = labels[i], bg = BackgroundColor)
+        x.grid(row =locations[0], locations[1])
