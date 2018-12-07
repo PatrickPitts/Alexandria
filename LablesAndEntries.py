@@ -21,4 +21,4 @@ def LabelBuild(master, labels, locations, BackgroundColor = "white"):
 
     for i in range(len(labels)):
         x = tk.Label(master, text = labels[i], bg = BackgroundColor)
-        x.grid(row =locations[0], locations[1])
+        x.grid(row =locations[0], column = locations[1])

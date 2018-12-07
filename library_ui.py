@@ -3,6 +3,7 @@ import sqlite3 as sq
 import datetime
 from pollDb import *
 import LablesAndEntries as LAE
+import build_db as BDB
 
 
 def create_connection():
@@ -22,8 +23,28 @@ def close_connection(db):
     db.close()
 
 def CleanupRoot():
+    #Strips all geometry and added visuals from the root frame,
+    #adds essential visual tools meant for every frame (ie menus)
+    #pathing the way for more visauls without any clutter
     for widget in root.winfo_children():
         widget.destroy()
+    BuildMenus()
+
+def BuildMenus():
+    menubar = tk.Menu(root)
+    SearchMenu = tk.Menu(menubar, tearoff = 0)
+    SearchMenu.add_command(label = "Search by ISBN", command = BuildSearchPane)
+    SearchMenu.add_command(label = "Search by Title", command = BuildSearchPane)
+
+    TestMenu = tk.Menu(menubar, tearoff = 0)
+    TestMenu.add_command(label = "Test Function", command = quit)
+    TestMenu.add_command(label = "Reset Database", command = BDB.main)
+
+
+    menubar.add_cascade(label="Search",menu = SearchMenu)
+    menubar.add_command(label="Add", command = BuildAddPane)
+    menubar.add_cascade(label = "TEST", menu = TestMenu)
+    root.config(menu=menubar)
 
 def GetAuthorsFromISBN(isbn):
     # A function that takes in an ISBN number, and returns a list of tuples,
@@ -58,6 +79,7 @@ def GetBasicData():
 
     db, c = create_connection()
 
+
     getAllBooks='''SELECT ISBN, Title, Publication_Date,
             Genre, Series FROM books ORDER BY Title'''
 
@@ -76,8 +98,12 @@ def GetBasicData():
     return booksData
 
 def BuildMainMenu():
-
+    #Creates the main menu pane. This pane holds buttons that will implement the
+    #functionality of the program, and will be implemented in all "back to menu"
+    #buttons in other panes.
     CleanupRoot()
+
+
     master = tk.Frame(root, width = 500, height = 500, bg = "LightGoldenrod2")
     master.grid()
     master.grid_propagate(0)
@@ -103,10 +129,11 @@ def BuildMainMenu():
     MakeIntroButtons()
 
 def Setup():
-
+    #Builds the starting frames and Tkinter windows, in which all other functionality is built
     global root; root = tk.Tk()
     root.title("Alexandria")
     root.geometry("+0+0")
+
 
     BuildMainMenu()
     root.mainloop()
@@ -148,48 +175,63 @@ def BuildResultsPane():
             x = tk.Label(DataFrame, text = records[i][j], bg = "plum2")
             x.grid(row = i+1, column = j, padx = 5, pady = 5)
 
+def InsertBookData():
+
+    db, cur = create_connection()
+
+    flag = InsertDataSanitationChecks(db, cur)
+    if flag:
+        print("Passed Sanitation Checks, Inserting (Not)")
+
+        first = AuthorFields[0].get()
+        if not first:
+            first = "None"
+        middle = AuthorFields[1].get()
+        if not middle:
+            middle = "None"
+        last = AuthorFields[2].get()
+        if not last:
+            last = "None"
+        print(first,middle,last)
+        cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r AND
+                Author_Middle IS %r AND
+                Author_Last IS %r''' %(first, middle, last)
+
+        print(cmd)
+        cur.execute(cmd)
+
+        if not cur.fetchall():
+            pass
+
+
+        close_connection(db)
+
+
+    else:
+        print("Problems with data, double check data")
+
+def InsertDataSanitationChecks(db, cur):
+    ErrorText.config(text = "")
+    title = BookFields[0].get()
+    isbn = BookFields[2].get()
+    if not isbn or len(title) == 0:
+        ErrorText.config(text = "You need at least a title and ISBN to add a book")
+        return False
+
+    cmd = "SELECT Title FROM Books WHERE ISBN = %d" % int(isbn)
+    cur.execute(cmd)
+    if cur.fetchall():
+        ErrorText.config(text = "Cannot add repeat ISBN Numbers.")
+        return False
+
+    return True
+
 def BuildAddPane():
 
     # A method that takes the add_fields Entries, gets the text from them,
     # and inputs them into a String that represents an SQL command that will
     # input that data into Alexandria.db database, books table
-    def SanitationChecks(db, cur):
-        ErrorText.config(text = "")
-        title = BookFields[0].get()
-        isbn = BookFields[2].get()
-        if not isbn or len(title) == 0:
-            ErrorText.config(text = "You need at least a title and ISBN to add a book")
-            return False
 
-        cmd = "SELECT Title FROM Books WHERE ISBN = %d" % int(isbn)
-        cur.execute(cmd)
-        if cur.fetchall():
-            ErrorText.config(text = "Cannot add repeat ISBN Numbers.")
-            return False
-
-        return True
-
-    def InsertBookData():
-
-        db, cur = create_connection()
-
-        flag = SanitationChecks(db, cur)
-        if flag:
-            print("Passed Sanitation Checks, Inserting (Not)")
-
-            first = AuthorFields[0].get()
-            middle = AuthorFields[1].get()
-            last = AuthorFields[2].get()
-            cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r OR "None" AND
-                    Author_Middle IS %r OR "None" AND
-                    Author_Last IS %r OR "None"''' %(first, middle, last)
-            print(cmd)
-            cur.execute(cmd)
-            print(cur.fetchall())
-
-
-        else:
-            print("Problems with data, double check data")
 
     CleanupRoot()
 
@@ -263,8 +305,7 @@ def BuildAddPane():
     MoreAuthors()
 
 def BuildSearchPane():
-    for widget in data_frame.winfo_children():
-        widget.destroy()
+    CleanupRoot()
 
 
 def main():

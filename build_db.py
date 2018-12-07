@@ -53,14 +53,14 @@ def insert_data(conn):
         VALUES (9781593275679,"How Linux Works","What Every Superuser Should Know",
                 2015-01-01,"Computer Science","Linux","TPB","No Starch Press","P&S",2)'''
 
-    aut1 = '''INSERT INTO authors(Author_ID, Author_First, Author_Last)
-        VALUES (1,"Mishell","Baker")'''
+    aut1 = '''INSERT INTO authors(Author_ID, Author_First, Author_Middle, Author_Last)
+        VALUES (1,"Mishell","None","Baker")'''
 
     aut2 = '''INSERT INTO authors(Author_ID, Author_First, Author_Middle, Author_Last)
         VALUES (2,"Sarah", "J.","Maas")'''
 
-    aut3 = '''INSERT INTO authors(Author_ID, Author_First, Author_Last)
-        VALUES (3,"Brian","Ward")'''
+    aut3 = '''INSERT INTO authors(Author_ID, Author_First, Author_Middle, Author_Last)
+        VALUES (3,"Brian","None","Ward")'''
 
     b2a1 = '''INSERT INTO BookToAuthors(ISBN, Author_ID)
         VALUES (9781481451949,1)'''
