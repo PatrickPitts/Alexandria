@@ -41,17 +41,17 @@ def insert_data(conn):
     insert1 = '''INSERT INTO books(ISBN, Title, Publication_Date, Genre,
                     Subgenre, Series, Format, Publisher, Owner)
         VALUES (9781481451949,"Imposter Syndrome",2018-01-01,
-            "Science Fiction", "Suspense", "The Arcadia Project","TPB","Saga Press","P&S")'''
+            "Science Fiction", "Suspense", "The Arcadia Project","TPB","Saga Press","Patrick & Shelby")'''
 
     insert2 = '''INSERT INTO books(ISBN, Title, Publication_Date, Genre,
                     Series, Format, Publisher, Owner)
         VALUES (9781619635180,"A Court of Thorns and Roses",
-                2016-05-01,"Fantasy","A Court of Thorns and Roses","TPB","Bloomsbury","P&S")'''
+                2016-05-01,"Fantasy","A Court of Thorns and Roses","TPB","Bloomsbury","Patrick & Shelby")'''
 
     insert3 = '''INSERT INTO books(ISBN, Title, Subtitle, Publication_Date,
                                 Genre, Subgenre, Format, Publisher, Owner, Edition)
         VALUES (9781593275679,"How Linux Works","What Every Superuser Should Know",
-                2015-01-01,"Computer Science","Linux","TPB","No Starch Press","P&S",2)'''
+                2015-01-01,"Computer Science","Linux","TPB","No Starch Press","Patrick & Shelby",2)'''
 
     aut1 = '''INSERT INTO authors(Author_ID, Author_First, Author_Middle, Author_Last)
         VALUES (1,"Mishell","None","Baker")'''

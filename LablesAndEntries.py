@@ -22,3 +22,12 @@ def LabelBuild(master, labels, locations, BackgroundColor = "white"):
     for i in range(len(labels)):
         x = tk.Label(master, text = labels[i], bg = BackgroundColor)
         x.grid(row =locations[0], column = locations[1])
+
+def EntriesToTuple(entries):
+    #Takes a list of Tkinter Entry objects, and returnts of just
+    #the string literal contents of the list
+    ReturnList = []
+    for item in entries:
+        ReturnList.append(item.get())
+
+    return tuple(ReturnList)

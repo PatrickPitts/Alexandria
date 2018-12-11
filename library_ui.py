@@ -1,7 +1,7 @@
 import Tkinter as tk
 import sqlite3 as sq
 import datetime
-from pollDb import *
+import pollDb as PDB
 import LablesAndEntries as LAE
 import build_db as BDB
 
@@ -39,11 +39,13 @@ def BuildMenus():
     TestMenu = tk.Menu(menubar, tearoff = 0)
     TestMenu.add_command(label = "Test Function", command = quit)
     TestMenu.add_command(label = "Reset Database", command = BDB.main)
+    TestMenu.add_command(label = "Poll Database", command = PDB.main)
 
 
     menubar.add_cascade(label="Search",menu = SearchMenu)
     menubar.add_command(label="Add", command = BuildAddPane)
     menubar.add_cascade(label = "TEST", menu = TestMenu)
+    menubar.add_command(label = "QUIT", command = quit)
     root.config(menu=menubar)
 
 def GetAuthorsFromISBN(isbn):
@@ -176,32 +178,62 @@ def BuildResultsPane():
             x.grid(row = i+1, column = j, padx = 5, pady = 5)
 
 def InsertBookData():
-
+    #Method that gathers the data from the the Add A Book pane,
+    #checks for duplicate data, and inserts it into the Alexandria database
     db, cur = create_connection()
 
     flag = InsertDataSanitationChecks(db, cur)
     if flag:
         print("Passed Sanitation Checks, Inserting (Not)")
 
-        first = AuthorFields[0].get()
-        if not first:
-            first = "None"
-        middle = AuthorFields[1].get()
-        if not middle:
-            middle = "None"
-        last = AuthorFields[2].get()
-        if not last:
-            last = "None"
-        print(first,middle,last)
-        cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r AND
-                Author_Middle IS %r AND
-                Author_Last IS %r''' %(first, middle, last)
+        #AuthorsData will be in a repeating format of
+        #(Author_First, Author_Middle, Author_Last, repeat those 3 for each author)
+        AuthorData = LAE.EntriesToTuple(AuthorFields)
 
-        print(cmd)
+        #BookData will be in the format of
+        #(Title, Subtitle, ISBN Number, Series Name, Position in Series, Genre,
+        #Subgenre, Publication Year, Publisher, Book Format, Book Owner)
+        BookData = LAE.EntriesToTuple(BookFields)
+        for i in range(0, len(AuthorData), 3):
+            #checks to see if the entered Author data is already in the database.
+            first = AuthorData[i]
+            if not first:
+                first = "None"
+            middle = AuthorData[i+1]
+            if not middle:
+                middle = "None"
+            last = AuthorData[i+2]
+            if not last:
+                last = "None"
+            cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r AND
+                    Author_Middle IS %r AND
+                    Author_Last IS %r''' %(first, middle, last)
+
+            cur.execute(cmd)
+            AuthorID = cur.fetchall()
+            #this if statement will execute if the author name set is not already in
+            #the database
+            if not AuthorID:
+                print("That author isnt in the database!")
+                cmd = ''' INSERT INTO Authors(Author_First, Author_Middle, Author_Last)
+                    VALUES(%r, %r, %r)''' % (first, middle, last)
+                cur.execute(cmd)
+                cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r AND
+                        Author_Middle IS %r AND
+                        Author_Last IS %r''' %(first, middle, last)
+
+                cur.execute(cmd)
+                AuthorID = cur.fetchall()
+            cmd = '''INSERT INTO BookToAuthors (Author_ID, ISBN) VALUES
+            (%r, %r)''' % (AuthorID[0][0], BookData[2])
+            cur.execute(cmd)
+            #(Title, Subtitle, ISBN Number, Series Name, Position in Series, Genre,
+            #Subgenre, Publication Year, Publisher, Book Format, Book Owner)
+        cmd = '''INSERT INTO Books (Title, Subtitle, ISBN, Series, Position_in_Series,
+                Genre, Subgenre, Publication_Date, Publisher, Format, Owner) VALUES
+                %s '''%(BookData,)
         cur.execute(cmd)
 
-        if not cur.fetchall():
-            pass
 
 
         close_connection(db)
@@ -223,7 +255,9 @@ def InsertDataSanitationChecks(db, cur):
     if cur.fetchall():
         ErrorText.config(text = "Cannot add repeat ISBN Numbers.")
         return False
-
+    if len(isbn) is not 13 or len(isbn) is not 10:
+        ErrorText.config(text = "ISBN needs to be either 10 or 13 characters long")
+        return False
     return True
 
 def BuildAddPane():
