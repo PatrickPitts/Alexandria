@@ -5,6 +5,11 @@ import pollDb as PDB
 import LablesAndEntries as LAE
 import build_db as BDB
 
+def test():
+    print(GetBasicData())
+    print(GetBasicData("isbn",9781593275679))
+
+    pass
 
 def create_connection():
     # A function that generates a connection to the Alexandria.db database,
@@ -22,6 +27,24 @@ def close_connection(db):
     db.commit()
     db.close()
 
+def SearchByISBN():
+    # TODO: Implement search functionality
+    def ExecuteISBNSearch():
+        #results = GetBasicData("isbn")
+        pass
+
+    SearchPane = tk.Toplevel(bg = "khaki1")
+    SearchPane.title("Search By ISBN")
+
+    l = tk.Label(SearchPane, text = "ISBN: ", bg = "khaki1", width = 20)
+    l.grid(row = 0, column = 0, padx = 5, pady = 5)
+
+    SearchEntry = tk.Entry(SearchPane, width = 13)
+    SearchEntry.grid(row=0, column = 1, padx = 5, pady = 5)
+
+    SearchButton = tk.Button(SearchPane, text = "Search!", command = lambda x = SearchEntry.get(): GetBasicData("isbn",x))
+    SearchButton.grid(row=1, column = 1, padx = 5, pady = 5)
+
 def CleanupRoot():
     #Strips all geometry and added visuals from the root frame,
     #adds essential visual tools meant for every frame (ie menus)
@@ -31,13 +54,14 @@ def CleanupRoot():
     BuildMenus()
 
 def BuildMenus():
+    #This function builds the Menu widget for the main window
     menubar = tk.Menu(root)
     SearchMenu = tk.Menu(menubar, tearoff = 0)
-    SearchMenu.add_command(label = "Search by ISBN", command = BuildSearchPane)
+    SearchMenu.add_command(label = "Search by ISBN", command = SearchByISBN)
     SearchMenu.add_command(label = "Search by Title", command = BuildSearchPane)
 
     TestMenu = tk.Menu(menubar, tearoff = 0)
-    TestMenu.add_command(label = "Test Function", command = quit)
+    TestMenu.add_command(label = "Test Function", command = test)
     TestMenu.add_command(label = "Reset Database", command = BDB.main)
     TestMenu.add_command(label = "Poll Database", command = PDB.main)
 
@@ -48,10 +72,15 @@ def BuildMenus():
     menubar.add_command(label = "QUIT", command = quit)
     root.config(menu=menubar)
 
+def FullBookDisplay(isbn):
+    ResultsPane = tk.Toplevel(bg= "khaki1")
+    l = tk.Label(ResultsPane, text = isbn)
+    l.grid()
+
 def GetAuthorsFromISBN(isbn):
     # A function that takes in an ISBN number, and returns a list of tuples,
-    # each of which holds the first and last name of an author associated with
-    # that ISBN
+    # each of which holds the first, middle, and last name of an author
+    # associated with that ISBN
 
     db, c = create_connection()
 
@@ -65,9 +94,9 @@ def GetAuthorsFromISBN(isbn):
 
     if len(AuthorIDList) > 1:
         AuthorIDTuple = tuple(AuthorIDList)
-        getNames = "SELECT Author_First, Author_Last from Authors WHERE Author_ID IN %s" % str(AuthorIDTuple)
+        getNames = "SELECT Author_First, Author_Middle, Author_Last from Authors WHERE Author_ID IN %s" % str(AuthorIDTuple)
     elif len(AuthorIDList) == 1:
-        getNames = "SELECT Author_First, Author_Last from Authors WHERE Author_ID = %d" % AuthorIDList[0]
+        getNames = "SELECT Author_First, Author_Middle, Author_Last from Authors WHERE Author_ID = %d" % AuthorIDList[0]
     else:
         msg = "Failed to access authors with ISBN %d" % isbn
         print(msg)
@@ -77,23 +106,34 @@ def GetAuthorsFromISBN(isbn):
     close_connection(db)
     return AuthorNames
 
-def GetBasicData():
+def GetBasicData(*command):
 
     db, c = create_connection()
+    if not command:
+        GetBooks='''SELECT ISBN, Title, Publication_Date,
+        Genre, Series FROM books ORDER BY Title'''
 
+    elif command[0] is "isbn":
+        GetBooks = '''SELECT ISBN, Title, Publication_Date,
+        Genre, Series FROM books WHERE isbn IS %d ORDER BY Title''' % command[1]
 
-    getAllBooks='''SELECT ISBN, Title, Publication_Date,
-            Genre, Series FROM books ORDER BY Title'''
+    elif command[0] is "genre":
+        GetBooks = '''SELECT ISBN, Title, Publication_Date, Genre,
+        Genre, Series FROM books WHERE genre IN %r ORDER BY Title''' % command[1]
 
-    c.execute(getAllBooks)
+    c.execute(GetBooks)
     booksData = list(c.fetchall())
     for i in range(len(booksData)):
         booksData[i] = list(booksData[i])
 
     authorsData =[]
     for i in range(len(booksData)):
-        HeadlineAuthor = GetAuthorsFromISBN(booksData[i][0])[0]
-        booksData[i] = booksData[i][:2]  +list(HeadlineAuthor) + booksData[i][2:]
+        HeadlineAuthorTuple = GetAuthorsFromISBN(booksData[i][0])[0]
+        HeadlineAuthor = [""]
+        for x in HeadlineAuthorTuple:
+            if x != u'None':
+             HeadlineAuthor[0] += x + " "
+        booksData[i] = booksData[i][:2]  + HeadlineAuthor + booksData[i][2:]
 
     close_connection(db)
 
@@ -143,40 +183,39 @@ def Setup():
 def BuildResultsPane():
 
     CleanupRoot()
-    master = tk.Frame(root, bg = "LightGoldenrod2")
-    master.grid()
 
-    ButtonFrame = tk.Frame(master, bg = "LightGoldenrod2")
-    ButtonFrame.grid(row = 0, column = 0)
+    DataFrame = tk.Frame(root, bg = "LightGoldenrod2")
+    DataFrame.grid(row = 1, column = 0)
 
-    DataFrame = tk.Frame(master, bg = "LightGoldenrod2")
-    DataFrame.grid(row = 0, column = 1)
+    HeaderFrame = tk.Frame(root, bg = "LightBlue")
+    HeaderFrame.grid(row = 0, column = 0)
 
-    BackButtton = tk.Button(ButtonFrame,text = "Back", command = BuildMainMenu)
-    BackButtton.grid(padx = 5, pady = 5)
+    LabelWidths = [13,64,16,16,16,32,2]
 
-    def BuildDataHeader():
+    DataLabels = ["ISBN","Title","Headline Author", "Publication Year", "Genre","Series",""]
 
-        data_labels = [("ISBN",13),("Title",32),("Author, Last",16),
-                        ("Author, First",16), ("Publication Year",16), ("Genre",12),
-                        ("Series",12)]
-
-        for i in range(len(data_labels)):
-            x = tk.Label(DataFrame, text=data_labels[i][0], bg="light blue")
-            x.grid(row=0, column=i, padx=5, pady=5, ipadx = 5)
-
-
-
-    BuildDataHeader()
+    for i in range(len(DataLabels)):
+        x = tk.Label(HeaderFrame, text=DataLabels[i], bg="LightBlue", width = LabelWidths[i])
+        x.grid(row=0, column=i)
 
     records = GetBasicData()
-
+    MoreButtons = []
     for i in range(len(records)):
-        for j in range(len(records[i])):
+        if i%2 == 0:
+            color = "LightGoldenrod2"
+        else:
+            color = "khaki1"
 
-            x = tk.Label(DataFrame, text = records[i][j], bg = "plum2")
-            x.grid(row = i+1, column = j, padx = 5, pady = 5)
+        f = tk.Frame(DataFrame, bg = color)
+        f.grid()
+        NumFields = len(records[i])
+        for j in range(NumFields):
 
+            l = tk.Label(f, text = records[i][j], width = LabelWidths[j], bg = color)
+            l.grid(row = i+1, column = j)
+        ISBNToPass = records[i][0]
+        MoreButtons.append(tk.Button(f, text = "...", command = lambda x = ISBNToPass: FullBookDisplay(x)))
+        MoreButtons[i].grid(row = i+1, column = NumFields + 1)
 def InsertBookData():
     #Method that gathers the data from the the Add A Book pane,
     #checks for duplicate data, and inserts it into the Alexandria database
