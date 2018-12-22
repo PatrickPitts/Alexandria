@@ -14,10 +14,11 @@ class Book():
         self.Authors = []
         self.CondensedAuthorNames = []
         self.BasicInfo = []
+        self.FullBookInfo = []
 
         self.cmd = '''SELECT Books.ISBN, Books.Title, Books.Subtitle,
         Books.Publication_Date, Books.Genre, Books.Subgenre, Books.Series,
-        Books.Position_in_Series, Books.Format, Books.Publisher, Books.Owner,
+        Books.Position_in_Series, Books.Format, Books.Publisher, Books.Owner, Books.Edition,
         Authors.Author_First, Authors.Author_Middle, Authors.Author_Last
             FROM BookToAuthors
                 INNER JOIN Authors ON
@@ -28,13 +29,13 @@ class Book():
         cur.execute(self.cmd)
 
         self.DataResults = cur.fetchall()
-#[ISBN 0, Title 1, Subtitle 2, Pub Date 3, Genre 4, Subgenre 5,
-# Series 6, Pos. in Series 7, Book Format 8, Publisher 9, Owner 10]
-        self.BookData = list(self.DataResults[0][:11]) ##NEEDS TO_LIST FUNCTION
+        #[ISBN 0, Title 1, Subtitle 2, Pub Date 3, Genre 4, Subgenre 5,
+        # Series 6, Pos. in Series 7, Book Format 8, Publisher 9, Owner 10]
+        self.BookData = list(self.DataResults[0][:12])
 
         for i in range(len(self.DataResults)):
 
-            self.Authors.append(self.DataResults[i][11:14])
+            self.Authors.append(self.DataResults[i][12:15])
 
         for ListOfNames in self.Authors:
             self.name = ""
@@ -42,15 +43,32 @@ class Book():
                 if ListOfNames[i] != u'None':
                     self.name += ListOfNames[i] + " "
             self.CondensedAuthorNames.append(self.name[:-1])
+
         self.BasicInfo += self.BookData[:2]
         self.BasicInfo.append(self.CondensedAuthorNames[0])
         self.BasicInfo += self.BookData[3:5]
         self.BasicInfo.append(self.BookData[6])
+
+        self.FullBookInfo = self.BookData
+
+        for name in self.CondensedAuthorNames:
+            self.FullBookInfo.append(name)
+
+
+    def GetBasicData(self):
         return self.BasicInfo
+
+    def GetFullBookData(self):
+        return self.FullBookInfo
+
+
 
 
 def test():
-    b = Book(9781619635180)
+    b = Book(9781593275679)
+    l = b.GetFullBookData()
+
+    print(l)
     pass
 
 def CreateConnection():
@@ -113,7 +131,7 @@ def Search():
         except sq.OperationalError:
             BuildBasicResultsPane(GetBasicData())
 
-    SearchPane = tk.Toplevel(bg = "khaki1")
+    SearchPane = tk.Toplevel(bg = MainColor)
     SearchOptions = ["ISBN:", "Title:", "Subtitle:",
         "Publication Date:","Genre:", "Subgenre:", "Series:","Edition:",
         "Publisher:","Format:","Position in Series:","Owner:", "Author Name:"]
@@ -121,7 +139,7 @@ def Search():
     SearchLoc =[(1,1),(2,1),(3,1),(5,1),(6,1),(7,1),(8,1),(9,1),(10,1),
                 (11,1),(12,1),(13,1),(4,1)]
     SearchEntriesWidths = [16, 32, 32, 6, 16, 16, 32, 4, 16, 6, 4, 16,32]
-    SearchEntries = LAE.LEBuild(SearchPane, SearchOptions, SearchLoc, BackgroundColor = "khaki1",
+    SearchEntries = LAE.LEBuild(SearchPane, SearchOptions, SearchLoc, BackgroundColor = MainColor,
                         EntryWidths = SearchEntriesWidths)
 
     SearchButton = tk.Button(SearchPane, text = "Search!", command = BuildSearchCommand)
@@ -160,31 +178,53 @@ def BuildMenus():
     root.config(menu=menubar)
 
 def FullBookDisplay(isbn):
-    ResultsPane = tk.Toplevel(bg= "khaki1")
-    LeftFrame = tk.Frame(ResultsPane)
-    LeftFrame.grid(row=0,column=0)
-    RightFrame = tk.Frame(ResultsPane)
-    RightFrame.grid(row=0,column=1)
+    ResultsPane = tk.Toplevel(bg= MainColor)
 
-    Labels = ["ISBN:", "Title:", "Subtitle:",
-        "Publication Date:","Genre:", "Subgenre:", "Series:","Edition:",
-        "Publisher:","Format:","Position in Series:","Owner:", "Author Name:"]
+    TopLeft = tk.Frame(ResultsPane, bg= SecondaryColor)
+    TopLeft.grid(row = 0, column = 0, padx = 5, pady = 5)
 
-    LabelLoc =[(1,1),(2,1),(3,1),(5,1),(6,1),(7,1),(8,1),(9,1),(10,1),
-                (11,1),(12,1),(13,1),(4,1)]
-    cmd = '''SELECT Books.ISBN, Books.Title, Books.Subtitle,
-    Books.Publication_Date, Books.Genre, Books.Subgenre, Books.Series,
-    Books.Position_in_Series, Books.Format, Books.Publisher, Books.Owner, Authors.Author_First, Authors.Author_Middle,
-        Authors.Author_Last FROM BookToAuthors
-            INNER JOIN Authors ON
-                Authors.Author_ID = BookToAuthors.Author_ID
-            INNER JOIN BOOKS ON
-                Books.ISBN = BookToAuthors.ISBN WHERE Books.ISBN is %d'''%isbn
-    cur.execute(cmd)
-    results = cur.fetchall()[0]
-    LAE.LabelBuild(LeftFrame,Labels,LabelLoc)
-    LAE.LabelBuild(RightFrame,results,LabelLoc)
+    BottomLeft = tk.Frame(ResultsPane, bg= SecondaryColor)
+    BottomLeft.grid(row = 1, column = 0, padx = 5, pady = 5)
 
+    TopRight = tk.Frame(ResultsPane, bg= SecondaryColor)
+    TopRight.grid(row = 0, column = 1, columnspan = 3, padx = 5, pady = 5)
+
+    b = Book(isbn)
+    BookData, AuthorData  = b.GetFullBookData()[:12],b.GetFullBookData()[12:]
+    print(BookData)
+    print(AuthorData)
+    NumAuthors = len(AuthorData)
+
+    Labels1 = ["Title:", "Subtitle:", "Series:", "Position in Series:","Edition:"]
+    Labels2 = ["Publisher:", "Publication Date:", "Format:",  "ISBN:"]
+    Labels3 = ["Author(s):", "Genre:", "Subgenre:",  "Owner:"]
+
+    Data1 = [BookData[1], BookData[2], BookData[6], BookData[7], BookData[11]]
+    Data2 = [BookData[9], BookData[3], BookData[8], BookData[0]]
+    Data3 = []
+    for name in AuthorData:
+        Data3.append(name)
+    Data3.append(BookData[4]); Data3.append(BookData[5]); Data3.append(BookData[10])
+
+    Label1Loc = [(1,1), (2,1), (3,1), (4,1), (5,1)]
+    Label2Loc = [(1,1), (2,1), (3,1), (4,1)]
+    Label3Loc = [(1,1), (NumAuthors + 1, 1),(NumAuthors + 2, 1),(NumAuthors + 3, 1)]
+
+    Data1Loc = [(1,2), (2,2), (3,2), (4,2), (5,2)]
+    Data2Loc = [(1,2), (2,2), (3,2), (4,2)]
+    Data3Loc = []
+    for i in range(1, NumAuthors + 1):
+        Data3Loc.append((i,2))
+    Data3Loc.append((NumAuthors + 1,2));Data3Loc.append((NumAuthors + 2,2));Data3Loc.append((NumAuthors + 3,2))
+
+
+    LAE.LabelBuild(TopLeft, Labels1, Label1Loc, BackgroundColor = SecondaryColor)
+    LAE.LabelBuild(BottomLeft, Labels2, Label2Loc, BackgroundColor = SecondaryColor)
+    LAE.LabelBuild(TopRight, Labels3, Label3Loc, BackgroundColor = SecondaryColor)
+
+    LAE.LabelBuild(TopLeft, Data1, Data1Loc, BackgroundColor = SecondaryColor)
+    LAE.LabelBuild(BottomLeft, Data2, Data2Loc, BackgroundColor = SecondaryColor)
+    LAE.LabelBuild(TopRight, Data3, Data3Loc, BackgroundColor = SecondaryColor)
 
 def GetAuthorsFromISBN(isbn):
     # A function that takes in an ISBN number, and returns a list of tuples,
@@ -214,32 +254,17 @@ def GetAuthorsFromISBN(isbn):
     AuthorNames = list(cur.fetchall())
     return AuthorNames
 
-def GetBasicData(*CustomSearch):
+def GetBasicData(*ISBNList):
 
-    if not CustomSearch:
+    if not ISBNList:
         GetBooks='''SELECT ISBN FROM books ORDER BY Title'''
         cur.execute(GetBooks)
         ISBNList = cur.fetchall()
-    else:
-        ISBNList = CustomSearch
 
     booksData = []
     for isbn in ISBNList:
-        b = Book(isbn)
+        b = Book(isbn[0])
         booksData.append(b.GetBasicData())
-
-    # booksData = list(cur.fetchall())
-    # for i in range(len(booksData)):
-    #     booksData[i] = list(booksData[i])
-    #
-    # authorsData =[]
-    # for i in range(len(booksData)):
-    #     HeadlineAuthorTuple = GetAuthorsFromISBN(booksData[i][0])[0]
-    #     HeadlineAuthor = [""]
-    #     for x in HeadlineAuthorTuple:
-    #         if x != u'None':
-    #          HeadlineAuthor[0] += x + " "
-    #     booksData[i] = booksData[i][:2]  + HeadlineAuthor + booksData[i][2:]
 
     return booksData
 
@@ -254,36 +279,39 @@ def BuildBasicResultsPane(records):
     #GetBasicData function, and generates the display that shows all that data
     CleanupRoot()
 
-    DataFrame = tk.Frame(root, bg = "LightGoldenrod2")
+    DataFrame = tk.Frame(root, bg = SecondaryColor)
     DataFrame.grid(row = 1, column = 0)
 
     HeaderFrame = tk.Frame(root, bg = "LightBlue")
     HeaderFrame.grid(row = 0, column = 0)
 
     LabelWidths = [13,64,16,16,16,32,2]
-
     DataLabels = ["ISBN","Title","Headline Author", "Publication Year", "Genre","Series",""]
 
+    MoreButtons = []
+
     for i in range(len(DataLabels)):
+
         x = tk.Label(HeaderFrame, text=DataLabels[i], bg="LightBlue", width = LabelWidths[i])
         x.grid(row=0, column=i)
 
-    MoreButtons = []
     for i in range(len(records)):
+
+        CountOfBookData = len(records[i])
+
         if i%2 == 0:
-            color = "LightGoldenrod2"
+            color = SecondaryColor
         else:
-            color = "khaki1"
+            color = MainColor
 
         f = tk.Frame(DataFrame, bg = color)
         f.grid()
-        NumberOfBookData = len(records[i])
-        for j in range(NumberOfBookData):
+        for j in range(CountOfBookData):
             l = tk.Label(f, text = records[i][j], width = LabelWidths[j], bg = color)
             l.grid(row = i+1, column = j)
         ISBNToPass = records[i][0]
         MoreButtons.append(tk.Button(f, text = "...", command = lambda x = ISBNToPass: FullBookDisplay(x)))
-        MoreButtons[i].grid(row = i+1, column = NumberOfBookData + 1)
+        MoreButtons[i].grid(row = i+1, column = CountOfBookData + 1)
 
 def InsertBookData():
     #Method that gathers the data from the the Add A Book pane,
@@ -346,23 +374,28 @@ def InsertBookData():
     else:
         print("Problems with data, double check data")
 
-def InsertDataSanitationChecks(db, cur):
+def InsertDataSanitationChecks():
+
     ErrorText.config(text = "")
+
     title = BookFields[0].get()
-    isbn = BookFields[2].get()
-    print(len(isbn))
+    isbn = int(BookFields[2].get())
+
     if not isbn or len(title) == 0:
         ErrorText.config(text = "You need at least a title and ISBN to add a book")
         return False
 
-    cmd = "SELECT Title FROM Books WHERE ISBN = %d" % int(isbn)
+    cmd = "SELECT Title FROM Books WHERE ISBN = %d" % isbn
     cur.execute(cmd)
+
     if cur.fetchall():
         ErrorText.config(text = "Cannot add repeat ISBN Numbers.")
         return False
+
     if len(isbn) is not 13 and len(isbn) is not 10:
         ErrorText.config(text = "ISBN needs to be either 10 or 13 characters long")
         return False
+
     return True
 
 def BuildAddPane():
@@ -387,22 +420,22 @@ def BuildAddPane():
         NumAuthors += 1
     def BuildMainMenu():
         BuildBasicResultsPane(GetBasicData())
-    master = tk.Frame(root, bg = "LightGoldenrod2")
+    master = tk.Frame(root, bg = SecondaryColor)
     master.grid()
 
-    ButtonFrame = tk.Frame(master, bg = "LightGoldenrod2")
+    ButtonFrame = tk.Frame(master, bg = SecondaryColor)
     ButtonFrame.grid(row = 0, column = 0)
 
-    DataFrame = tk.Frame(master, bg = "LightGoldenrod2")
+    DataFrame = tk.Frame(master, bg = SecondaryColor)
     DataFrame.grid(row = 0, column = 1)
 
-    RightFrame = tk.Frame(master, bg = "LightGoldenrod2")
+    RightFrame = tk.Frame(master, bg = SecondaryColor)
     RightFrame.grid(row = 0, column = 2)
 
-    AuthorFrame = tk.Frame(RightFrame, bg = "LightGoldenrod2")
+    AuthorFrame = tk.Frame(RightFrame, bg = SecondaryColor)
     AuthorFrame.grid(row = 1, column = 0)
 
-    AuthorButtonFrame = tk.Frame(RightFrame, bg = "LightGoldenrod2")
+    AuthorButtonFrame = tk.Frame(RightFrame, bg = SecondaryColor)
     AuthorButtonFrame.grid(row = 0, column = 0)
 
     BackButtton = tk.Button(ButtonFrame, text = "Back", command = BuildMainMenu)
@@ -439,7 +472,7 @@ def BuildAddPane():
     t.grid(row = 9, column = 2)
     BookFields.append(OwnerOption)
 
-    ErrorText = tk.Label(DataFrame, text = "", bg = "LightGoldenrod2", fg = "red", font = "bold")
+    ErrorText = tk.Label(DataFrame, text = "", bg = SecondaryColor, fg = "red", font = "bold")
     ErrorText.grid(row = 10, column = 1, columnspan = 5)
 
     MoreAuthors()
@@ -448,10 +481,11 @@ def main():
 
     Setup()
     BuildBasicResultsPane(GetBasicData())
-    global db; global cur
+    global db; global cur; global MainColor; global SecondaryColor
 
     root.mainloop()
 
 if __name__ == '__main__':
     db, cur = CreateConnection()
+    MainColor = "khaki1"; SecondaryColor = "LightGoldenrod2"
     main()

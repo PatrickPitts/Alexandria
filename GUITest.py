@@ -2,7 +2,7 @@ import Tkinter as tk
 
 root = tk.Tk()
 
-master = tk.Frame(root, bg = "blue", width = 500, height = 500)
+master = tk.Frame(root, bg = "blue", width = 5000, height = 5000)
 master.grid()
 
 def Hello():
@@ -13,7 +13,8 @@ menubar.add_command(label="Hello", command = Hello)
 menubar.add_command(label="Quit", command = quit)
 root.config(menu=menubar)
 
-
+Outer = tk.Frame(master, bg = "red", width = 1500, height=5200)
+Outer.grid()
 for i in range(5):
     color="white"
     if i%2 == 0:
@@ -21,7 +22,7 @@ for i in range(5):
     else:
         color = "LightGoldenrod2"
 
-    x = tk.Frame(master,bg = color,width=1000, height = 20)
+    x = tk.Frame(Outer,bg = color,width=1000, height = 20)
     x.grid(row=i, column = 0)
     x.grid_propagate(False)
 

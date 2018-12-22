@@ -23,11 +23,11 @@ def LEBuild(master, labels, locations, BackgroundColor = "white", EntryWidths = 
 
     return entries
 
-def LabelBuild(master, labels, locations, BackgroundColor = "white"):
+def LabelBuild(master, labels, locations, BackgroundColor = "white", LableWidths = []):
 
     for i in range(len(labels)):
         x = tk.Label(master, text = labels[i], bg = BackgroundColor)
-        x.grid(row =locations[i][0], column = locations[i][1])
+        x.grid(row =locations[i][0]-1, column = locations[i][1]-1, padx=5, pady=5)
 
 def EntriesToTuple(entries):
     #Takes a list of Tkinter Entry objects, and returnts of just
