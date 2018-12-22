@@ -218,13 +218,13 @@ def FullBookDisplay(isbn):
     Data3Loc.append((NumAuthors + 1,2));Data3Loc.append((NumAuthors + 2,2));Data3Loc.append((NumAuthors + 3,2))
 
 
-    LAE.LabelBuild(TopLeft, Labels1, Label1Loc, BackgroundColor = SecondaryColor)
-    LAE.LabelBuild(BottomLeft, Labels2, Label2Loc, BackgroundColor = SecondaryColor)
-    LAE.LabelBuild(TopRight, Labels3, Label3Loc, BackgroundColor = SecondaryColor)
+    LAE.LabelBuild(TopLeft, Labels1, Label1Loc, BackgroundColor = SecondaryColor, st = tk.E)
+    LAE.LabelBuild(BottomLeft, Labels2, Label2Loc, BackgroundColor = SecondaryColor, st = tk.E)
+    LAE.LabelBuild(TopRight, Labels3, Label3Loc, BackgroundColor = SecondaryColor, st = tk.E)
 
-    LAE.LabelBuild(TopLeft, Data1, Data1Loc, BackgroundColor = SecondaryColor)
-    LAE.LabelBuild(BottomLeft, Data2, Data2Loc, BackgroundColor = SecondaryColor)
-    LAE.LabelBuild(TopRight, Data3, Data3Loc, BackgroundColor = SecondaryColor)
+    LAE.LabelBuild(TopLeft, Data1, Data1Loc, BackgroundColor = SecondaryColor, st = tk.W)
+    LAE.LabelBuild(BottomLeft, Data2, Data2Loc, BackgroundColor = SecondaryColor, st = tk.W)
+    LAE.LabelBuild(TopRight, Data3, Data3Loc, BackgroundColor = SecondaryColor, st = tk.W)
 
 def GetAuthorsFromISBN(isbn):
     # A function that takes in an ISBN number, and returns a list of tuples,
