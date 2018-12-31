@@ -1,4 +1,4 @@
-import Tkinter as tk
+import tkinter as tk
 
 #code is unchanged, but now there are some comments!
 
