@@ -64,9 +64,30 @@ class Book:
     def GetFullBookData(self):
         return self.FullBookInfo
 
+    def DeleteBookData(self):
+        cmd = "DELETE FROM Books WHERE ISBN is %d" % self.isbn
+        cur.execute(cmd)
+
+        cmd = "SELECT Author_ID from BookToAuthors WHERE ISBN is %d" % self.isbn
+        cur.execute(cmd)
+        auth_id = cur.fetchone()[0]
+
+        cmd = "DELETE FROM BookToAuthors WHERE ISBN IS %d" % self.isbn
+        cur.execute(cmd)
+
+        cmd = "SELECT ISBN FROM BookToAuthors where Author_ID IS %d" % auth_id
+        cur.execute(cmd)
+
+        if not cur.fetchall():
+            cmd = "DELETE FROM Authors WHERE Author_ID is %d" % auth_id
+            cur.execute(cmd)
+        db.commit()
+
 
 def test():
-    delete_book(1212121212121)
+    b = Book(1212121212121)
+    b.DeleteBookData()
+    BuildBasicResultsPane(GetBasicData())
 
     pass
 
@@ -87,28 +108,6 @@ def CloseConnection(d):
 
     d.commit()
     d.close()
-
-
-def delete_book(var):
-    isbn = int(var)
-    b = Book(isbn)
-
-    cmd = "DELETE FROM Books WHERE ISBN is %d" % isbn
-    cur.execute(cmd)
-
-    cmd = "SELECT Author_ID from BookToAuthors WHERE ISBN is %d" % isbn
-    cur.execute(cmd)
-    auth_id = cur.fetchone()[0]
-
-    cmd = "DELETE FROM BookToAuthors WHERE ISBN IS %d" % isbn
-    cur.execute(cmd)
-
-    cmd = "SELECT ISBN FROM BookToAuthors where Author_ID IS %d" % auth_id
-    cur.execute(cmd)
-
-    if not cur.fetchall():
-        cmd = "DELETE FROM Authors WHERE Author_ID is %d" % auth_id
-
 
 
 def Search():
@@ -186,74 +185,74 @@ def CleanupRoot():
 
 def BuildMenus():
     # This function builds the Menu widget for the main window
-    menubar = tk.Menu(root)
-    SearchMenu = tk.Menu(menubar, tearoff=0)
-    # SearchMenu.add_command(label = "Search by ISBN", command = Search)
-    # SearchMenu.add_command(label = "Search by Title", command = quit)
-    SearchMenu.add_command(label="Comprehensive Search", command=Search)
+    menu_bar = tk.Menu(root)
 
-    TestMenu = tk.Menu(menubar, tearoff=0)
-    TestMenu.add_command(label="Test Function", command=test)
-    TestMenu.add_command(label="Reset Database", command=BDB.main)
-    TestMenu.add_command(label="Poll Database", command=PDB.main)
+    search_menu = tk.Menu(menu_bar, tearoff=0)
+    search_menu.add_command(label="Comprehensive Search", command=Search)
 
-    menubar.add_cascade(label="Search", menu=SearchMenu)
-    menubar.add_command(label="Add", command=BuildAddPane)
-    menubar.add_cascade(label="TEST", menu=TestMenu)
-    menubar.add_command(label="QUIT", command=quit)
-    root.config(menu=menubar)
+    test_menu = tk.Menu(menu_bar, tearoff=0)
+    test_menu.add_command(label="Test Function", command=test)
+    test_menu.add_command(label="Reset Database", command=BDB.main)
+    test_menu.add_command(label="Poll Database", command=PDB.main)
+
+    menu_bar.add_cascade(label="Search", menu=search_menu)
+    menu_bar.add_command(label="Add", command=BuildAddPane)
+    menu_bar.add_cascade(label="TEST", menu=test_menu)
+    menu_bar.add_command(label="QUIT", command=quit)
+    root.config(menu=menu_bar)
 
 
 def FullBookDisplay(isbn):
-    ResultsPane = tk.Toplevel(bg=MainColor)
+    results_pane = tk.Toplevel(bg=MainColor)
 
-    TopLeft = tk.Frame(ResultsPane, bg=SecondaryColor)
-    TopLeft.grid(row=0, column=0, padx=5, pady=5)
+    top_left = tk.Frame(results_pane, bg=SecondaryColor)
+    top_left.grid(row=0, column=0, padx=5, pady=5)
 
-    BottomLeft = tk.Frame(ResultsPane, bg=SecondaryColor)
-    BottomLeft.grid(row=1, column=0, padx=5, pady=5)
+    bottom_left = tk.Frame(results_pane, bg=SecondaryColor)
+    bottom_left.grid(row=1, column=0, padx=5, pady=5)
 
-    TopRight = tk.Frame(ResultsPane, bg=SecondaryColor)
-    TopRight.grid(row=0, column=1, columnspan=3, padx=5, pady=5)
+    top_right = tk.Frame(results_pane, bg=SecondaryColor)
+    top_right.grid(row=0, column=1, columnspan=3, padx=5, pady=5)
 
     b = Book(isbn)
-    BookData, AuthorData = b.GetFullBookData()[:12], b.GetFullBookData()[12:]
+    book_data, author_data = b.GetFullBookData()[:12], b.GetFullBookData()[12:]
 
-    NumAuthors = len(AuthorData)
+    num_authors = len(author_data)
 
-    Labels1 = ["Title:", "Subtitle:", "Series:", "Position in Series:", "Edition:"]
-    Labels2 = ["Publisher:", "Publication Date:", "Format:", "ISBN:"]
-    Labels3 = ["Author(s):", "Genre:", "Subgenre:", "Owner:"]
+    labels1 = ["Title:", "Subtitle:", "Series:", "Position in Series:", "Edition:"]
+    labels2 = ["Publisher:", "Publication Date:", "Format:", "ISBN:"]
+    labels3 = ["Author(s):", "Genre:", "Subgenre:", "Owner:"]
 
-    Data1 = [BookData[1], BookData[2], BookData[6], BookData[7], BookData[11]]
-    Data2 = [BookData[9], BookData[3], BookData[8], BookData[0]]
-    Data3 = []
-    for name in AuthorData:
-        Data3.append(name)
-    Data3.append(BookData[4])
-    Data3.append(BookData[5])
-    Data3.append(BookData[10])
+    data1 = [book_data[1], book_data[2], book_data[6], book_data[7], book_data[11]]
+    data2 = [book_data[9], book_data[3], book_data[8], book_data[0]]
+    data3 = []
+    for name in author_data:
+        data3.append(name)
+    data3.append(book_data[4])
+    data3.append(book_data[5])
+    data3.append(book_data[10])
 
-    Label1Loc = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]
-    Label2Loc = [(1, 1), (2, 1), (3, 1), (4, 1)]
-    Label3Loc = [(1, 1), (NumAuthors + 1, 1), (NumAuthors + 2, 1), (NumAuthors + 3, 1)]
+    label1_loc = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]
+    label2_loc = [(1, 1), (2, 1), (3, 1), (4, 1)]
+    label3_loc = [(1, 1), (num_authors + 1, 1), (num_authors + 2, 1), (num_authors + 3, 1)]
 
-    Data1Loc = [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2)]
-    Data2Loc = [(1, 2), (2, 2), (3, 2), (4, 2)]
-    Data3Loc = []
-    for i in range(1, NumAuthors + 1):
-        Data3Loc.append((i, 2))
-    Data3Loc.append((NumAuthors + 1, 2))
-    Data3Loc.append((NumAuthors + 2, 2))
-    Data3Loc.append((NumAuthors + 3, 2))
+    data1_loc = [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2)]
+    data2_loc = [(1, 2), (2, 2), (3, 2), (4, 2)]
+    data3_loc = []
 
-    LAE.LabelBuild(TopLeft, Labels1, Label1Loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(BottomLeft, Labels2, Label2Loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(TopRight, Labels3, Label3Loc, BackgroundColor=SecondaryColor)
+    for i in range(1, num_authors + 1):
+        data3_loc.append((i, 2))
+    data3_loc.append((num_authors + 1, 2))
+    data3_loc.append((num_authors + 2, 2))
+    data3_loc.append((num_authors + 3, 2))
 
-    LAE.LabelBuild(TopLeft, Data1, Data1Loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(BottomLeft, Data2, Data2Loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(TopRight, Data3, Data3Loc, BackgroundColor=SecondaryColor)
+    LAE.LabelBuild(top_left, labels1, label1_loc, BackgroundColor=SecondaryColor)
+    LAE.LabelBuild(bottom_left, labels2, label2_loc, BackgroundColor=SecondaryColor)
+    LAE.LabelBuild(top_right, labels3, label3_loc, BackgroundColor=SecondaryColor)
+
+    LAE.LabelBuild(top_left, data1, data1_loc, BackgroundColor=SecondaryColor)
+    LAE.LabelBuild(bottom_left, data2, data2_loc, BackgroundColor=SecondaryColor)
+    LAE.LabelBuild(top_right, data3, data3_loc, BackgroundColor=SecondaryColor)
 
 
 def GetBasicData(*results):
@@ -287,38 +286,44 @@ def BuildBasicResultsPane(records):
     # GetBasicData function, and generates the display that shows all that data
     CleanupRoot()
 
-    DataFrame = tk.Frame(root, bg=SecondaryColor)
-    DataFrame.grid(row=1, column=0)
+    data_frame = tk.Frame(root, bg=SecondaryColor)
+    data_frame.grid(row=1, column=0)
 
-    HeaderFrame = tk.Frame(root, bg="LightBlue")
-    HeaderFrame.grid(row=0, column=0)
+    header_frame = tk.Frame(root, bg="LightBlue")
+    header_frame.grid(row=0, column=0)
 
-    LabelWidths = [13, 64, 16, 16, 16, 32, 2]
-    DataLabels = ["ISBN", "Title", "Headline Author", "Publication Year", "Genre", "Series", ""]
+    label_widths = [13, 64, 16, 16, 16, 32, 6]
+    data_labels = ["ISBN", "Title", "Headline Author", "Publication Year", "Genre", "Series", ""]
 
-    MoreButtons = []
+    more_buttons = []
+    delete_buttons = []
 
-    for i in range(len(DataLabels)):
-        x = tk.Label(HeaderFrame, text=DataLabels[i], bg="LightBlue", width=LabelWidths[i])
+    for i in range(len(data_labels)):
+        x = tk.Label(header_frame, text=data_labels[i], bg="LightBlue", width=label_widths[i])
         x.grid(row=0, column=i)
 
     for i in range(len(records)):
 
-        CountOfBookData = len(records[i])
+        count_of_book_data = len(records[i])
 
         if i % 2 == 0:
             color = SecondaryColor
         else:
             color = MainColor
 
-        f = tk.Frame(DataFrame, bg=color)
+        f = tk.Frame(data_frame, bg=color, height=3)
         f.grid()
-        for j in range(CountOfBookData):
-            l = tk.Label(f, text=records[i][j], width=LabelWidths[j], bg=color)
+        for j in range(count_of_book_data):
+            l = tk.Label(f, text=records[i][j], width=label_widths[j], bg=color)
             l.grid(row=i + 1, column=j)
+
         isbn_to_pass = records[i][0]
-        MoreButtons.append(tk.Button(f, text="...", command=lambda q=isbn_to_pass: FullBookDisplay(q)))
-        MoreButtons[i].grid(row=i + 1, column=CountOfBookData + 1)
+
+        more_buttons.append(tk.Button(f, text="More...", width=6, height=1,
+                                      command=lambda q=isbn_to_pass: FullBookDisplay(q)))
+        more_buttons[i].grid(row=i + 1, column=count_of_book_data + 1)
+
+        delete_buttons.append(tk.Button(f, text = "Delete...", command=lambda b=Book(isbn_to_pass): b.DeleteBookData()))
 
 
 def InsertBookData():
