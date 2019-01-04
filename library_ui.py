@@ -1,14 +1,15 @@
 import tkinter as tk
 import sqlite3 as sq
-import pollDb as PDB
-import LabelsAndEntries as LAE
-import build_db as BDB
+import LabelsAndEntries as LaE
+
+import pollDb as Pdb
+import build_db as bdb
 
 
 class Book:
     # an object that represents a book, to be worked with programmatically.
     # typically, a Book object is created to collect and aggregate relevant data
-    # on a book identified by it's ISBN number. That data is then pulled from the books
+    # on a book identified by it's ISBN number. That data is then pulled from the Book
     # object, usually to fill in the UI.
     def __init__(self, isbn):
 
@@ -33,12 +34,36 @@ class Book:
 
         self.DataResults = cur.fetchall()
 
+        self.book_data = {
+            "ISBN": self.DataResults[0][0],
+            "Title": self.DataResults[0][1],
+            "Subtitle": self.DataResults[0][2],
+            "Publication Date": self.DataResults[0][3],
+            "Genre": self.DataResults[0][4],
+            "Subgenre": self.DataResults[0][5],
+            "Series": self.DataResults[0][6],
+            "Position in Series": self.DataResults[0][7],
+            "Format": self.DataResults[0][8],
+            "Publisher": self.DataResults[0][9],
+            "Owner": self.DataResults[0][10],
+            "Edition": self.DataResults[0][11]
+        }
+
         # [ISBN 0, Title 1, Subtitle 2, Pub Date 3, Genre 4, Subgenre 5,
-        # Series 6, Pos. in Series 7, Book Format 8, Publisher 9, Owner 10]
+        # Series 6, Pos. in Series 7, Book Format 8, Publisher 9, Owner 10, Edition 11]
 
         self.BookData = list(self.DataResults[0][:12])
 
         for i in range(len(self.DataResults)):
+
+            ins_1 = "Author First %d" % (i+1)
+            ins_2 = "Author Middle %d" % (i+1)
+            ins_3 = "Author Last %d" % (i+1)
+
+            self.book_data[ins_1] = self.DataResults[i][12]
+            self.book_data[ins_2] = self.DataResults[i][13]
+            self.book_data[ins_3] = self.DataResults[i][14]
+
             self.Authors.append(self.DataResults[i][12:15])
 
         for ListOfNames in self.Authors:
@@ -58,13 +83,13 @@ class Book:
         for name in self.CondensedAuthorNames:
             self.FullBookInfo.append(name)
 
-    def GetBasicData(self):
+    def get_basic_data(self):
         return self.BasicInfo
 
-    def GetFullBookData(self):
+    def get_full_book_data(self):
         return self.FullBookInfo
 
-    def DeleteBookData(self):
+    def delete_book_data(self):
         cmd = "DELETE FROM Books WHERE ISBN is %d" % self.isbn
         cur.execute(cmd)
 
@@ -85,9 +110,7 @@ class Book:
 
 
 def test():
-    b = Book(1212121212121)
-    b.DeleteBookData()
-    BuildBasicResultsPane(GetBasicData())
+    # b = Book(1111111111111)
 
     pass
 
@@ -102,7 +125,7 @@ def create_connection():
     return d, d.cursor()
 
 
-def CloseConnection(d):
+def close_connection(d):
     # A function that takes a connection object, commits any changes to the
     # connected database, then closes the connection.
 
@@ -110,8 +133,9 @@ def CloseConnection(d):
     d.close()
 
 
-def Search():
-    def BuildSearchCommand():
+def search():
+
+    def build_search_command():
 
         # The rest of the code in the Execute Search function relies on this
         # select command returning these exact parameters, in this order. If changes
@@ -123,18 +147,18 @@ def Search():
                 INNER JOIN BOOKS ON
                     Books.ISBN = BookToAuthors.ISBN WHERE '''
 
-        for i in range(len(SearchEntries) - 1):
-            search_values = SearchEntries[i].get()
+        for i in range(len(search_entries) - 1):
+            search_values = search_entries[i].get()
             if search_values:
                 try:
                     search_values = int(search_values)
-                    cmd += "Books.%s IS %d AND " % (SQLSearchOptions[i], search_values)
+                    cmd += "Books.%s IS %d AND " % (sql_search_options[i], search_values)
 
                 except ValueError:
 
-                    cmd += "Books.%s IS %r AND " % (SQLSearchOptions[i], search_values)
+                    cmd += "Books.%s IS %r AND " % (sql_search_options[i], search_values)
 
-        author_name = SearchEntries[-1].get()
+        author_name = search_entries[-1].get()
         author_name_list = author_name.split()
         # AuthorTableColumns = ["Author_First", "Author_Middle", "Author_Last"]
 
@@ -149,51 +173,51 @@ def Search():
                 results.append(row[0])
             if 0 < len(results):
                 results = list(set(results))
-                BuildBasicResultsPane(GetBasicData(results))
+                build_basic_results_pane(get_basic_data(results))
             else:
-                BuildBasicResultsPane(GetBasicData())
+                build_basic_results_pane(get_basic_data())
         except sq.OperationalError:
-            BuildBasicResultsPane(GetBasicData())
+            build_basic_results_pane(get_basic_data())
 
-    SearchPane = tk.Toplevel(bg=MainColor)
-    SearchOptions = ["ISBN:", "Title:", "Subtitle:",
-                     "Publication Date:", "Genre:", "Subgenre:", "Series:", "Edition:",
-                     "Publisher:", "Format:", "Position in Series:", "Owner:", "Author Name:"]
+    search_pane = tk.Toplevel(bg=MainColor)
+    search_options = ["ISBN:", "Title:", "Subtitle:",
+                      "Publication Date:", "Genre:", "Subgenre:", "Series:", "Edition:",
+                      "Publisher:", "Format:", "Position in Series:", "Owner:", "Author Name:"]
 
-    SearchLoc = [(1, 1), (2, 1), (3, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
-                 (11, 1), (12, 1), (13, 1), (4, 1)]
-    SearchEntriesWidths = [16, 32, 32, 6, 16, 16, 32, 4, 16, 6, 4, 16, 32]
-    SearchEntries = LAE.LEBuild(SearchPane, SearchOptions, SearchLoc, BackgroundColor=MainColor,
-                                EntryWidths=SearchEntriesWidths)
+    search_loc = [(1, 1), (2, 1), (3, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
+                  (11, 1), (12, 1), (13, 1), (4, 1)]
+    search_entries_widths = [16, 32, 32, 6, 16, 16, 32, 4, 16, 6, 4, 16, 32]
+    search_entries = LaE.LEBuild(search_pane, search_options, search_loc, BackgroundColor=MainColor,
+                                 EntryWidths=search_entries_widths)
 
-    SearchButton = tk.Button(SearchPane, text="Search!", command=BuildSearchCommand)
-    SearchButton.grid(column=5)
+    search_button = tk.Button(search_pane, text="Search!", command=build_search_command)
+    search_button.grid(column=5)
 
-    SQLSearchOptions = []
-    for thing in SearchOptions:
-        SQLSearchOptions.append(thing.replace(" ", "_").replace(":", ""))
+    sql_search_options = []
+    for thing in search_options:
+        sql_search_options.append(thing.replace(" ", "_").replace(":", ""))
 
 
-def CleanupRoot():
+def cleanup_root():
     # Strips all geometry and added visuals from the root frame,
     # adds essential visual tools meant for every frame (ie menus)
     # making way for more visuals without any clutter
     for widget in root.winfo_children():
         widget.destroy()
-    BuildMenus()
+    build_menus()
 
 
-def BuildMenus():
+def build_menus():
     # This function builds the Menu widget for the main window
     menu_bar = tk.Menu(root)
 
     search_menu = tk.Menu(menu_bar, tearoff=0)
-    search_menu.add_command(label="Comprehensive Search", command=Search)
+    search_menu.add_command(label="Comprehensive Search", command=search)
 
     test_menu = tk.Menu(menu_bar, tearoff=0)
     test_menu.add_command(label="Test Function", command=test)
-    test_menu.add_command(label="Reset Database", command=BDB.main)
-    test_menu.add_command(label="Poll Database", command=PDB.main)
+    test_menu.add_command(label="Reset Database", command=bdb.main)
+    test_menu.add_command(label="Poll Database", command=Pdb.main)
 
     menu_bar.add_cascade(label="Search", menu=search_menu)
     menu_bar.add_command(label="Add", command=BuildAddPane)
@@ -202,7 +226,7 @@ def BuildMenus():
     root.config(menu=menu_bar)
 
 
-def FullBookDisplay(isbn):
+def full_book_display(isbn):
     results_pane = tk.Toplevel(bg=MainColor)
 
     top_left = tk.Frame(results_pane, bg=SecondaryColor)
@@ -215,7 +239,7 @@ def FullBookDisplay(isbn):
     top_right.grid(row=0, column=1, columnspan=3, padx=5, pady=5)
 
     b = Book(isbn)
-    book_data, author_data = b.GetFullBookData()[:12], b.GetFullBookData()[12:]
+    book_data, author_data = b.get_full_book_data()[:12], b.get_full_book_data()[12:]
 
     num_authors = len(author_data)
 
@@ -246,16 +270,16 @@ def FullBookDisplay(isbn):
     data3_loc.append((num_authors + 2, 2))
     data3_loc.append((num_authors + 3, 2))
 
-    LAE.LabelBuild(top_left, labels1, label1_loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(bottom_left, labels2, label2_loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(top_right, labels3, label3_loc, BackgroundColor=SecondaryColor)
+    LaE.LabelBuild(top_left, labels1, label1_loc, BackgroundColor=SecondaryColor)
+    LaE.LabelBuild(bottom_left, labels2, label2_loc, BackgroundColor=SecondaryColor)
+    LaE.LabelBuild(top_right, labels3, label3_loc, BackgroundColor=SecondaryColor)
 
-    LAE.LabelBuild(top_left, data1, data1_loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(bottom_left, data2, data2_loc, BackgroundColor=SecondaryColor)
-    LAE.LabelBuild(top_right, data3, data3_loc, BackgroundColor=SecondaryColor)
+    LaE.LabelBuild(top_left, data1, data1_loc, BackgroundColor=SecondaryColor)
+    LaE.LabelBuild(bottom_left, data2, data2_loc, BackgroundColor=SecondaryColor)
+    LaE.LabelBuild(top_right, data3, data3_loc, BackgroundColor=SecondaryColor)
 
 
-def GetBasicData(*results):
+def get_basic_data(*results):
     isbn_list = []
     if not results or len(results) == 0:
         cmd = '''SELECT ISBN FROM books ORDER BY Title'''
@@ -268,12 +292,12 @@ def GetBasicData(*results):
     books_data = []
     for num in isbn_list:
         b = Book(num)
-        books_data.append(b.GetBasicData())
+        books_data.append(b.get_basic_data())
 
     return books_data
 
 
-def Setup():
+def setup():
     # Builds the starting frames and Tkinter windows, in which all other functionality is built
     global root
     root = tk.Tk()
@@ -281,10 +305,10 @@ def Setup():
     root.geometry("+0+0")
 
 
-def BuildBasicResultsPane(records):
+def build_basic_results_pane(records):
     # This function takes the records list as created by the
     # GetBasicData function, and generates the display that shows all that data
-    CleanupRoot()
+    cleanup_root()
 
     data_frame = tk.Frame(root, bg=SecondaryColor)
     data_frame.grid(row=1, column=0)
@@ -293,14 +317,19 @@ def BuildBasicResultsPane(records):
     header_frame.grid(row=0, column=0)
 
     label_widths = [13, 64, 16, 16, 16, 32, 6]
-    data_labels = ["ISBN", "Title", "Headline Author", "Publication Year", "Genre", "Series", ""]
 
     more_buttons = []
     delete_buttons = []
 
-    for i in range(len(data_labels)):
-        x = tk.Label(header_frame, text=data_labels[i], bg="LightBlue", width=label_widths[i])
+    for i in range(len(basic_data)):
+        x = tk.Label(header_frame, text=basic_data[i], bg="LightBlue", width=label_widths[i])
         x.grid(row=0, column=i)
+
+    # this extra header added to the header acts as a spacer to account for the extra width of each result frame,
+    # ensuring that the header frame has Light Blue all the way across the frame, above the buttons of the
+    # results.
+    x = tk.Label(header_frame, text="", bg="LightBlue", width=25)
+    x.grid(row=0, column=len(basic_data)+1, columnspan=2)
 
     for i in range(len(records)):
 
@@ -319,11 +348,13 @@ def BuildBasicResultsPane(records):
 
         isbn_to_pass = records[i][0]
 
-        more_buttons.append(tk.Button(f, text="More...", width=6, height=1,
-                                      command=lambda q=isbn_to_pass: FullBookDisplay(q)))
-        more_buttons[i].grid(row=i + 1, column=count_of_book_data + 1)
+        more_buttons.append(tk.Button(f, text="More...", width=6,
+                                      command=lambda q=isbn_to_pass: full_book_display(q)))
+        more_buttons[i].grid(row=i + 1, column=count_of_book_data + 1, padx=10)
 
-        delete_buttons.append(tk.Button(f, text = "Delete...", command=lambda b=Book(isbn_to_pass): b.DeleteBookData()))
+        delete_buttons.append(tk.Button(f, text="Delete...", width=9,
+                                        command=lambda b=Book(isbn_to_pass): b.delete_book_data()))
+        delete_buttons[i].grid(row=i + 1, column=count_of_book_data + 2, padx=10)
 
 
 def InsertBookData():
@@ -336,12 +367,12 @@ def InsertBookData():
 
         # AuthorsData will be in a repeating format of
         # (Author_First, Author_Middle, Author_Last, repeat those 3 for each author)
-        AuthorData = LAE.EntriesToTuple(AuthorFields)
+        AuthorData = LaE.EntriesToTuple(AuthorFields)
 
         # BookData will be in the format of
         # (Title, Subtitle, ISBN Number, Series Name, Position in Series, Genre,
         # Subgenre, Publication Year, Publisher, Book Format, Book Owner)
-        BookData = LAE.EntriesToTuple(BookFields)
+        BookData = LaE.EntriesToTuple(BookFields)
         for i in range(0, len(AuthorData), 3):
             # checks to see if the entered Author data is already in the database.
             first = AuthorData[i]
@@ -416,7 +447,7 @@ def BuildAddPane():
     # and inputs them into a String that represents an SQL command that will
     # input that data into Alexandria.db database, books table
 
-    CleanupRoot()
+    cleanup_root()
 
     global NumAuthors;
     NumAuthors = 1
@@ -430,11 +461,11 @@ def BuildAddPane():
         global AuthorFields
         AuthLabels = ["Author, First: ", "Middle: ", "Last: "]
         AuthLocations = [(NumAuthors + 1, 1), (NumAuthors + 1, 2), (NumAuthors + 1, 3)]
-        AuthorFields += LAE.LEBuild(AuthorFrame, AuthLabels, AuthLocations, BackgroundColor="thistle")
+        AuthorFields += LaE.LEBuild(AuthorFrame, AuthLabels, AuthLocations, BackgroundColor="thistle")
         NumAuthors += 1
 
     def BuildMainMenu():
-        BuildBasicResultsPane(GetBasicData())
+        build_basic_results_pane(get_basic_data())
 
     master = tk.Frame(root, bg=SecondaryColor)
     master.grid()
@@ -471,7 +502,7 @@ def BuildAddPane():
                       "Genre: ", "Subgenre: ", "Publication Year: ", "Publisher: "]
     BookLabelLocations = [(1, 1), (1, 2), (1, 3), (3, 1), (3, 2), (5, 1), (5, 2), (7, 1), (7, 2), (7, 3)]
 
-    BookFields = LAE.LEBuild(DataFrame, BookLabelTexts, BookLabelLocations, BackgroundColor="thistle")
+    BookFields = LaE.LEBuild(DataFrame, BookLabelTexts, BookLabelLocations, BackgroundColor="thistle")
     x = tk.Label(DataFrame, text="Format: ", bg="thistle")
     x.grid(row=7, column=5)
 
@@ -497,18 +528,19 @@ def BuildAddPane():
 
 
 def main():
-    Setup()
-    BuildBasicResultsPane(GetBasicData())
+    setup()
+    build_basic_results_pane(get_basic_data())
     global db
     global cur
     global MainColor
     global SecondaryColor
-
+    global basic_data
     root.mainloop()
 
 
 if __name__ == '__main__':
     db, cur = create_connection()
-    MainColor = "khaki1";
+    MainColor = "khaki1"
     SecondaryColor = "LightGoldenrod2"
+    basic_data = ["ISBN", "Title", "Headline Author", "Publication Year", "Genre", "Series"]
     main()
