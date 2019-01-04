@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="34f314cf-1011-4bcc-b4df-46ef74f64f0e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/Alexandria.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Alexandria.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Alexandria.db" beforeDir="false" afterPath="$PROJECT_DIR$/Alexandria.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/library_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/library_ui.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -13,16 +11,38 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FavoritesManager">
+    <favorites_list name="Alexandria" />
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/library_ui.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-418">
-              <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+            <state relative-caret-position="528">
+              <caret line="134" lean-forward="true" selection-start-line="134" selection-end-line="134" />
               <folding>
                 <element signature="e#0#20#0" expanded="true" />
+                <element signature="e#136#3852#0" />
+                <element signature="e#135#206#0" />
+                <element signature="e#456#2449#0" />
+                <element signature="e#3183#3381#0" />
+                <element signature="e#3458#3615#0" />
+                <element signature="e#2328#2905#0" />
+                <element signature="e#3829#3852#0" />
+                <element signature="e#4216#4249#0" />
+                <element signature="e#4281#4650#0" />
+                <element signature="e#3630#6331#0" />
+                <element signature="e#6357#6621#0" />
+                <element signature="e#6646#7358#0" />
+                <element signature="e#8268#10358#0" />
+                <element signature="e#10455#10969#0" />
+                <element signature="e#9511#9909#0" />
+                <element signature="e#9929#10110#0" />
+                <element signature="e#11692#14359#0" />
+                <element signature="e#14400#15008#0" />
                 <element signature="e#15035#18156#0" />
+                <element signature="e#18175#18321#0" />
               </folding>
             </state>
           </provider>
@@ -61,8 +81,8 @@
       <find>getbas</find>
       <find>ISBNList</find>
       <find>GetHeaders</find>
-      <find>basic_data</find>
       <find>pdb</find>
+      <find>basic_data</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -172,10 +192,10 @@
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.24962178" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info id="Favorites" order="2" side_tool="true" weight="0.32980332" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3289689" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4989339" weight="0.29787233" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4989339" visible="true" weight="0.29787233" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39770868" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -222,11 +242,30 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/library_ui.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-418">
-          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+        <state relative-caret-position="528">
+          <caret line="134" lean-forward="true" selection-start-line="134" selection-end-line="134" />
           <folding>
             <element signature="e#0#20#0" expanded="true" />
+            <element signature="e#136#3852#0" />
+            <element signature="e#135#206#0" />
+            <element signature="e#456#2449#0" />
+            <element signature="e#3183#3381#0" />
+            <element signature="e#3458#3615#0" />
+            <element signature="e#2328#2905#0" />
+            <element signature="e#3829#3852#0" />
+            <element signature="e#4216#4249#0" />
+            <element signature="e#4281#4650#0" />
+            <element signature="e#3630#6331#0" />
+            <element signature="e#6357#6621#0" />
+            <element signature="e#6646#7358#0" />
+            <element signature="e#8268#10358#0" />
+            <element signature="e#10455#10969#0" />
+            <element signature="e#9511#9909#0" />
+            <element signature="e#9929#10110#0" />
+            <element signature="e#11692#14359#0" />
+            <element signature="e#14400#15008#0" />
             <element signature="e#15035#18156#0" />
+            <element signature="e#18175#18321#0" />
           </folding>
         </state>
       </provider>

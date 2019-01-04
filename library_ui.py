@@ -19,6 +19,8 @@ class Book:
         self.CondensedAuthorNames = []
         self.BasicInfo = []
         self.FullBookInfo = []
+        self.basic_book_info = []
+        self.full_book_info = []
 
         self.cmd = '''SELECT Books.ISBN, Books.Title, Books.Subtitle,
         Books.Publication_Date, Books.Genre, Books.Subgenre, Books.Series,
@@ -33,12 +35,18 @@ class Book:
         cur.execute(self.cmd)
 
         self.DataResults = cur.fetchall()
+        # [ISBN 0, Title 1, Subtitle 2, Pub Date 3, Genre 4, Subgenre 5,
+        # Series 6, Pos. in Series 7, Book Format 8, Publisher 9, Owner 10, Edition 11,
+        # Author First 12, Author Middle 13, Author Last 14]
+        # self.DataResults will  be a tuple containing a list this information from the database in this order.
+        # If there is more than one Author, DataResults will contain multiple lists, each of which will have different
+        # author name data, but otherwise will contain the same information
 
         self.book_data = {
             "ISBN": self.DataResults[0][0],
             "Title": self.DataResults[0][1],
             "Subtitle": self.DataResults[0][2],
-            "Publication Date": self.DataResults[0][3],
+            "Publication Year": self.DataResults[0][3],
             "Genre": self.DataResults[0][4],
             "Subgenre": self.DataResults[0][5],
             "Series": self.DataResults[0][6],
@@ -49,45 +57,34 @@ class Book:
             "Edition": self.DataResults[0][11]
         }
 
-        # [ISBN 0, Title 1, Subtitle 2, Pub Date 3, Genre 4, Subgenre 5,
-        # Series 6, Pos. in Series 7, Book Format 8, Publisher 9, Owner 10, Edition 11]
-
-        self.BookData = list(self.DataResults[0][:12])
-
         for i in range(len(self.DataResults)):
 
-            ins_1 = "Author First %d" % (i+1)
-            ins_2 = "Author Middle %d" % (i+1)
-            ins_3 = "Author Last %d" % (i+1)
+            ins = "Author %d" % (i+1)
 
-            self.book_data[ins_1] = self.DataResults[i][12]
-            self.book_data[ins_2] = self.DataResults[i][13]
-            self.book_data[ins_3] = self.DataResults[i][14]
+            name = ""
+            for item in self.DataResults[i][12:15]:
+                if item != u'None':
+                    name += item + " "
 
-            self.Authors.append(self.DataResults[i][12:15])
-
-        for ListOfNames in self.Authors:
-            self.name = ""
-            for i in range(len(ListOfNames)):
-                if ListOfNames[i] != u'None':
-                    self.name += ListOfNames[i] + " "
-            self.CondensedAuthorNames.append(self.name[:-1])
-
-        self.BasicInfo += self.BookData[:2]
-        self.BasicInfo.append(self.CondensedAuthorNames[0])
-        self.BasicInfo += self.BookData[3:5]
-        self.BasicInfo.append(self.BookData[6])
-
-        self.FullBookInfo = self.BookData
-
-        for name in self.CondensedAuthorNames:
-            self.FullBookInfo.append(name)
+            self.book_data[ins] = name
 
     def get_basic_data(self):
-        return self.BasicInfo
+
+        for item in basic_data:
+            if item == "Headline Author":
+                item = "Author 1"
+            self.basic_book_info.append(self.book_data[item])
+
+        return self.basic_book_info
 
     def get_full_book_data(self):
-        return self.FullBookInfo
+
+        self.full_book_info = []
+
+        for key in self.book_data:
+            self.full_book_info.append(self.book_data[key])
+
+        return self.full_book_info
 
     def delete_book_data(self):
         cmd = "DELETE FROM Books WHERE ISBN is %d" % self.isbn
@@ -107,6 +104,9 @@ class Book:
             cmd = "DELETE FROM Authors WHERE Author_ID is %d" % auth_id
             cur.execute(cmd)
         db.commit()
+
+    def get_title(self):
+        return self.book_data["Title"]
 
 
 def test():
@@ -220,7 +220,7 @@ def build_menus():
     test_menu.add_command(label="Poll Database", command=Pdb.main)
 
     menu_bar.add_cascade(label="Search", menu=search_menu)
-    menu_bar.add_command(label="Add", command=BuildAddPane)
+    menu_bar.add_command(label="Add", command=build_add_pane)
     menu_bar.add_cascade(label="TEST", menu=test_menu)
     menu_bar.add_command(label="QUIT", command=quit)
     root.config(menu=menu_bar)
@@ -277,6 +277,27 @@ def full_book_display(isbn):
     LaE.LabelBuild(top_left, data1, data1_loc, BackgroundColor=SecondaryColor)
     LaE.LabelBuild(bottom_left, data2, data2_loc, BackgroundColor=SecondaryColor)
     LaE.LabelBuild(top_right, data3, data3_loc, BackgroundColor=SecondaryColor)
+
+
+def confirm_delete(b):
+
+    def delete_and_close():
+        b.delete_book_data()
+        db.commit()
+        confirm.destroy()
+        build_basic_results_pane(get_basic_data())
+
+    confirm = tk.Toplevel(bg=MainColor)
+
+    txt = "Are you sure you want to delete %s from your collection?" % b.get_title()
+    msg = tk.Label(confirm, text=txt, bg=MainColor)
+    msg.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
+
+    delete_button = tk.Button(confirm, text="Delete", command=delete_and_close)
+    delete_button.grid(row=1, column=0, padx=10, pady=10)
+
+    cancel_button = tk.Button(confirm, text="Cancel", command=confirm.destroy)
+    cancel_button.grid(row=1, column=1, padx=10, pady=10)
 
 
 def get_basic_data(*results):
@@ -343,8 +364,8 @@ def build_basic_results_pane(records):
         f = tk.Frame(data_frame, bg=color, height=3)
         f.grid()
         for j in range(count_of_book_data):
-            l = tk.Label(f, text=records[i][j], width=label_widths[j], bg=color)
-            l.grid(row=i + 1, column=j)
+            msg = tk.Label(f, text=records[i][j], width=label_widths[j], bg=color)
+            msg.grid(row=i + 1, column=j)
 
         isbn_to_pass = records[i][0]
 
@@ -353,35 +374,35 @@ def build_basic_results_pane(records):
         more_buttons[i].grid(row=i + 1, column=count_of_book_data + 1, padx=10)
 
         delete_buttons.append(tk.Button(f, text="Delete...", width=9,
-                                        command=lambda b=Book(isbn_to_pass): b.delete_book_data()))
+                                        command=lambda b=Book(isbn_to_pass): confirm_delete(b)))
         delete_buttons[i].grid(row=i + 1, column=count_of_book_data + 2, padx=10)
 
 
-def InsertBookData():
+def insert_book_data():
     # Method that gathers the data from the the Add A Book pane,
     # checks for duplicate data, and inserts it into the Alexandria database
 
-    flag = InsertDataSanitationChecks()
+    flag = insert_data_sanitation_checks()
     if flag:
         print("Passed Sanitation Checks, Inserting (Not)")
 
         # AuthorsData will be in a repeating format of
         # (Author_First, Author_Middle, Author_Last, repeat those 3 for each author)
-        AuthorData = LaE.EntriesToTuple(AuthorFields)
+        author_data = LaE.EntriesToTuple(AuthorFields)
 
-        # BookData will be in the format of
+        # book_data will be in the format of
         # (Title, Subtitle, ISBN Number, Series Name, Position in Series, Genre,
         # Subgenre, Publication Year, Publisher, Book Format, Book Owner)
-        BookData = LaE.EntriesToTuple(BookFields)
-        for i in range(0, len(AuthorData), 3):
+        book_data = LaE.EntriesToTuple(BookFields)
+        for i in range(0, len(author_data), 3):
             # checks to see if the entered Author data is already in the database.
-            first = AuthorData[i]
+            first = author_data[i]
             if not first:
                 first = "None"
-            middle = AuthorData[i + 1]
+            middle = author_data[i + 1]
             if not middle:
                 middle = "None"
-            last = AuthorData[i + 2]
+            last = author_data[i + 2]
             if not last:
                 last = "None"
             cmd = '''SELECT Author_ID FROM Authors WHERE Author_First IS %r AND
@@ -389,10 +410,10 @@ def InsertBookData():
                     Author_Last IS %r''' % (first, middle, last)
 
             cur.execute(cmd)
-            AuthorID = cur.fetchall()
+            author_id = cur.fetchall()
             # this if statement will execute if the author name set is not already in
             # the database
-            if not AuthorID:
+            if not author_id:
                 print("That author isnt in the database!")
                 cmd = ''' INSERT INTO Authors(Author_First, Author_Middle, Author_Last)
                     VALUES(%r, %r, %r)''' % (first, middle, last)
@@ -402,15 +423,15 @@ def InsertBookData():
                         Author_Last IS %r''' % (first, middle, last)
 
                 cur.execute(cmd)
-                AuthorID = cur.fetchall()
-            cmd = '''INSERT INTO BookToAuthors (Author_ID, ISBN) VALUES
-            (%r, %r)''' % (AuthorID[0][0], BookData[2])
+                author_id = cur.fetchall()
+            cmd = f'''INSERT INTO BookToAuthors (Author_ID, ISBN) VALUES
+            ({author_id[0][0]!r}, {book_data[2]!r})'''
             cur.execute(cmd)
             # (Title, Subtitle, ISBN Number, Series Name, Position in Series, Genre,
             # Subgenre, Publication Year, Publisher, Book Format, Book Owner)
         cmd = '''INSERT INTO Books (Title, Subtitle, ISBN, Series, Position_in_Series,
                 Genre, Subgenre, Publication_Date, Publisher, Format, Owner) VALUES
-                %s ''' % (BookData,)
+                %s ''' % (book_data,)
         cur.execute(cmd)
         db.commit()
 
@@ -418,7 +439,7 @@ def InsertBookData():
         print("Problems with data, double check data")
 
 
-def InsertDataSanitationChecks():
+def insert_data_sanitation_checks():
     ErrorText.config(text="")
 
     title = BookFields[0].get()
@@ -442,89 +463,89 @@ def InsertDataSanitationChecks():
     return True
 
 
-def BuildAddPane():
+def build_add_pane():
     # A method that takes the add_fields Entries, gets the text from them,
     # and inputs them into a String that represents an SQL command that will
     # input that data into Alexandria.db database, books table
 
     cleanup_root()
 
-    global NumAuthors;
+    global NumAuthors
     NumAuthors = 1
-    global AuthorFields;
+    global AuthorFields
     AuthorFields = []
     global BookFields
     global ErrorText
 
-    def MoreAuthors():
-        global NumAuthors;
+    def more_authors():
+        global NumAuthors
         global AuthorFields
-        AuthLabels = ["Author, First: ", "Middle: ", "Last: "]
-        AuthLocations = [(NumAuthors + 1, 1), (NumAuthors + 1, 2), (NumAuthors + 1, 3)]
-        AuthorFields += LaE.LEBuild(AuthorFrame, AuthLabels, AuthLocations, BackgroundColor="thistle")
+        auth_labels = ["Author, First: ", "Middle: ", "Last: "]
+        auth_locations = [(NumAuthors + 1, 1), (NumAuthors + 1, 2), (NumAuthors + 1, 3)]
+        AuthorFields += LaE.LEBuild(author_frame, auth_labels, auth_locations, BackgroundColor="thistle")
         NumAuthors += 1
 
-    def BuildMainMenu():
+    def build_main_menu():
         build_basic_results_pane(get_basic_data())
 
     master = tk.Frame(root, bg=SecondaryColor)
     master.grid()
 
-    ButtonFrame = tk.Frame(master, bg=SecondaryColor)
-    ButtonFrame.grid(row=0, column=0)
+    button_frame = tk.Frame(master, bg=SecondaryColor)
+    button_frame.grid(row=0, column=0)
 
-    DataFrame = tk.Frame(master, bg=SecondaryColor)
-    DataFrame.grid(row=0, column=1)
+    data_frame = tk.Frame(master, bg=SecondaryColor)
+    data_frame.grid(row=0, column=1)
 
-    RightFrame = tk.Frame(master, bg=SecondaryColor)
-    RightFrame.grid(row=0, column=2)
+    right_frame = tk.Frame(master, bg=SecondaryColor)
+    right_frame.grid(row=0, column=2)
 
-    AuthorFrame = tk.Frame(RightFrame, bg=SecondaryColor)
-    AuthorFrame.grid(row=1, column=0)
+    author_frame = tk.Frame(right_frame, bg=SecondaryColor)
+    author_frame.grid(row=1, column=0)
 
-    AuthorButtonFrame = tk.Frame(RightFrame, bg=SecondaryColor)
-    AuthorButtonFrame.grid(row=0, column=0)
+    author_button_frame = tk.Frame(right_frame, bg=SecondaryColor)
+    author_button_frame.grid(row=0, column=0)
 
-    BackButtton = tk.Button(ButtonFrame, text="Back", command=BuildMainMenu)
-    BackButtton.grid(row=1, column=0)
+    back_button = tk.Button(button_frame, text="Back", command=build_main_menu)
+    back_button.grid(row=1, column=0)
 
-    InsertButton = tk.Button(ButtonFrame, text="Add Book!", padx=10, pady=10, command=InsertBookData)
-    InsertButton.grid(row=2, column=0, pady=20)
+    insert_button = tk.Button(button_frame, text="Add Book!", padx=10, pady=10, command=insert_book_data)
+    insert_button.grid(row=2, column=0, pady=20)
 
-    MoreAuthorsButton = tk.Button(AuthorButtonFrame, text="Another Author", command=MoreAuthors,
-                                  padx=10, pady=10)
-    MoreAuthorsButton.grid(row=0, column=1)
+    more_authors_button = tk.Button(author_button_frame, text="Another Author", command=more_authors,
+                                    padx=10, pady=10)
+    more_authors_button.grid(row=0, column=1)
 
-    x = tk.Label(ButtonFrame, text="ADD A BOOK TO THE LIBRARY", bg="LightBlue")
+    x = tk.Label(button_frame, text="ADD A BOOK TO THE LIBRARY", bg="LightBlue")
     x.grid(row=0, column=0, padx=10, pady=10, ipadx=10, ipady=10)
 
-    BookLabelTexts = ["Title: ", "Subtitle: ", "ISBN: ", "Series: ", "Series #: ",
-                      "Genre: ", "Subgenre: ", "Publication Year: ", "Publisher: "]
-    BookLabelLocations = [(1, 1), (1, 2), (1, 3), (3, 1), (3, 2), (5, 1), (5, 2), (7, 1), (7, 2), (7, 3)]
+    book_label_texts = ["Title: ", "Subtitle: ", "ISBN: ", "Series: ", "Series #: ",
+                        "Genre: ", "Subgenre: ", "Publication Year: ", "Publisher: "]
+    book_label_locations = [(1, 1), (1, 2), (1, 3), (3, 1), (3, 2), (5, 1), (5, 2), (7, 1), (7, 2), (7, 3)]
 
-    BookFields = LaE.LEBuild(DataFrame, BookLabelTexts, BookLabelLocations, BackgroundColor="thistle")
-    x = tk.Label(DataFrame, text="Format: ", bg="thistle")
+    BookFields = LaE.LEBuild(data_frame, book_label_texts, book_label_locations, BackgroundColor="thistle")
+    x = tk.Label(data_frame, text="Format: ", bg="thistle")
     x.grid(row=7, column=5)
 
-    FormatOption = tk.StringVar(DataFrame);
-    FormatOption.set("Mass Market PB")
-    t = tk.OptionMenu(DataFrame, FormatOption, "Mass Market PB", "Trade PB", "Hard Back")
+    format_option = tk.StringVar(data_frame)
+    format_option.set("Mass Market PB")
+    t = tk.OptionMenu(data_frame, format_option, "Mass Market PB", "Trade PB", "Hard Back")
     t.grid(row=7, column=6)
-    BookFields.append(FormatOption)
+    BookFields.append(format_option)
 
-    x = tk.Label(DataFrame, text="Owner: ", bg="thistle")
+    x = tk.Label(data_frame, text="Owner: ", bg="thistle")
     x.grid(row=9, column=1)
 
-    OwnerOption = tk.StringVar(DataFrame);
-    OwnerOption.set("Patrick & Shelby")
-    t = tk.OptionMenu(DataFrame, OwnerOption, "Patrick & Shelby", "John & Kathy")
+    owner_option = tk.StringVar(data_frame)
+    owner_option.set("Patrick & Shelby")
+    t = tk.OptionMenu(data_frame, owner_option, "Patrick & Shelby", "John & Kathy")
     t.grid(row=9, column=2)
-    BookFields.append(OwnerOption)
+    BookFields.append(owner_option)
 
-    ErrorText = tk.Label(DataFrame, text="", bg=SecondaryColor, fg="red", font="bold")
+    ErrorText = tk.Label(data_frame, text="", bg=SecondaryColor, fg="red", font="bold")
     ErrorText.grid(row=10, column=1, columnspan=5)
 
-    MoreAuthors()
+    more_authors()
 
 
 def main():
