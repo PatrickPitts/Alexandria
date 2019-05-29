@@ -8,5 +8,8 @@ keeping track of what we have and what we want is hugely complicated. This tool 
 
 This project is built with the tacit understanding that software like this already exists out there in the world. However, it's either 
 paid software, or is freeware that harvests my information to sell to advertisers; either way, not a fan. Furthermore, this is very much a 
-practice exercise. It helps to have a project to work on as you learn things like UX development, database development and implementation, 
-API integration, and so on.
+practice exercise.
+
+This code is very messy. I am in the process of cleaning up implementation, naming convention, and code comments. In the mean time, feel free to puruse the code and test it out. 
+
+This project focuses on UI development with TKinter, and database access/management with SQL using the sqlite3 module.
